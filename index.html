@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Vault - Personal Document Management</title>
+    <title>Project Vault - Advanced Document Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- PDF.js for reliable PDF rendering -->
@@ -35,6 +35,7 @@
                     animation: {
                         'fade-in': 'fadeIn 0.3s ease-out',
                         'slide-up': 'slideUp 0.4s ease-out',
+                        'slide-right': 'slideRight 0.3s ease-out',
                     },
                     keyframes: {
                         fadeIn: {
@@ -44,6 +45,10 @@
                         slideUp: {
                             '0%': { transform: 'translateY(20px)', opacity: '0' },
                             '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        slideRight: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(0)' },
                         }
                     }
                 }
@@ -187,6 +192,19 @@
         }
         
         .dark .file-card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .folder-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .folder-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .dark .folder-card:hover {
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
         }
         
@@ -355,6 +373,57 @@
                 padding: 4px 8px;
             }
         }
+
+        /* Sidebar toggle animation */
+        .sidebar-panel {
+            transition: transform 0.3s ease, width 0.3s ease;
+        }
+        
+        .sidebar-hidden {
+            transform: translateX(100%);
+            width: 0;
+            padding: 0;
+            opacity: 0;
+        }
+
+        /* Zoom controls floating */
+        .zoom-controls-floating {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(31, 41, 55, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(75, 85, 99, 0.5);
+            border-radius: 12px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .breadcrumb-item {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb-item:hover {
+            color: var(--primary-500);
+        }
+
+        .project-folder {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .subproject-section {
+            border-left: 2px solid var(--primary-300);
+            margin-left: 16px;
+            padding-left: 16px;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 theme-transition dark:bg-gray-900 dark:text-gray-100">
@@ -471,6 +540,17 @@
         </header>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Breadcrumb -->
+            <div id="breadcrumb" class="flex items-center gap-2 mb-6 text-sm text-gray-600 dark:text-gray-400 hidden">
+                <span class="breadcrumb-item hover:text-primary-600" onclick="navigateToRoot()">All Documents</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span id="breadcrumbProject" class="breadcrumb-item hover:text-primary-600"></span>
+                <span id="breadcrumbSubproject" class="hidden">
+                    <i class="fas fa-chevron-right text-xs mx-2"></i>
+                    <span class="text-primary-600 font-medium" id="breadcrumbSubprojectName"></span>
+                </span>
+            </div>
+
             <div class="flex flex-col md:flex-row gap-4 mb-8">
                 <div class="flex-1 relative">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
@@ -492,38 +572,102 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3 mb-6" id="filterContainer">
-                <button onclick="filterByProject(null)" id="filter-all" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-all bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm">
-                    All Documents
+            <!-- Section Tabs -->
+            <div class="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+                <button onclick="switchSection('all')" id="section-all" class="section-tab px-4 py-3 text-sm font-medium border-b-2 border-primary-500 text-primary-600 dark:text-primary-400">
+                    <i class="fas fa-th-large mr-2"></i>All Documents
+                </button>
+                <button onclick="switchSection('projects')" id="section-projects" class="section-tab px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-folder mr-2"></i>Projects
                 </button>
             </div>
 
-            <div class="flex items-center justify-between mb-6">
-                <div class="text-sm text-gray-500 dark:text-gray-400">
-                    <span id="docCount">0</span> documents
+            <!-- All Documents View -->
+            <div id="allDocumentsView">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                        <span id="docCount">0</span> documents
+                    </div>
+                    <div class="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700 shadow-sm theme-transition">
+                        <button onclick="setViewMode('grid')" id="viewGrid" class="p-2 rounded-md transition-colors bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button onclick="setViewMode('list')" id="viewList" class="p-2 rounded-md transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700 shadow-sm theme-transition">
-                    <button onclick="setViewMode('grid')" id="viewGrid" class="p-2 rounded-md transition-colors bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">
-                        <i class="fas fa-th-large"></i>
-                    </button>
-                    <button onclick="setViewMode('list')" id="viewList" class="p-2 rounded-md transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-                        <i class="fas fa-list"></i>
+
+                <div id="documentsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                </div>
+
+                <div id="emptyState" class="hidden text-center py-20">
+                    <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
+                        <i class="fas fa-folder-open text-4xl text-gray-400 dark:text-gray-500"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No documents yet</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">Upload your first document to get started.</p>
+                    <button onclick="openUploadModal()" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all shadow-lg">
+                        Upload Document
                     </button>
                 </div>
             </div>
 
-            <div id="documentsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Projects View -->
+            <div id="projectsView" class="hidden">
+                <div id="projectsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                </div>
+                
+                <div id="emptyProjectsState" class="hidden text-center py-20">
+                    <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
+                        <i class="fas fa-folder text-4xl text-gray-400 dark:text-gray-500"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No projects yet</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">Create your first project to organize documents.</p>
+                    <button onclick="openProjectModal()" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all shadow-lg">
+                        Create Project
+                    </button>
+                </div>
             </div>
 
-            <div id="emptyState" class="hidden text-center py-20">
-                <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
-                    <i class="fas fa-folder-open text-4xl text-gray-400 dark:text-gray-500"></i>
+            <!-- Project Detail View -->
+            <div id="projectDetailView" class="hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 id="projectDetailTitle" class="text-2xl font-bold text-gray-900 dark:text-white"></h2>
+                        <p id="projectDetailDesc" class="text-gray-500 dark:text-gray-400 mt-1"></p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="openSubprojectModal()" id="addSubprojectBtn" class="px-4 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium rounded-lg border border-gray-200 dark:border-gray-700 transition-all flex items-center gap-2">
+                            <i class="fas fa-folder-plus"></i>
+                            <span class="hidden sm:inline">Add Subproject</span>
+                        </button>
+                        <button onclick="openUploadModal()" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all shadow-lg flex items-center gap-2">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            Upload
+                        </button>
+                    </div>
                 </div>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No documents yet</h3>
-                <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">Upload your first document to get started.</p>
-                <button onclick="openUploadModal()" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all shadow-lg">
-                    Upload Document
-                </button>
+
+                <!-- Subprojects Section -->
+                <div id="subprojectsSection" class="mb-8">
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Subprojects</h3>
+                    <div id="subprojectsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    </div>
+                </div>
+
+                <!-- Documents Section -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Documents</h3>
+                    <div id="projectDocumentsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    </div>
+                    <div id="emptyProjectDocs" class="hidden text-center py-12">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                            <i class="fas fa-file text-2xl text-gray-400"></i>
+                        </div>
+                        <p class="text-gray-500 dark:text-gray-400">No documents in this project</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -543,18 +687,9 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <div id="zoomControls" class="hidden md:flex items-center gap-1 bg-gray-700 rounded-lg p-1 mr-2">
-                    <button onclick="adjustZoom(-0.1)" class="p-1.5 hover:bg-gray-600 rounded text-gray-300 transition-colors">
-                        <i class="fas fa-minus text-xs"></i>
-                    </button>
-                    <span id="zoomLevel" class="text-gray-300 text-sm w-12 text-center font-mono">100%</span>
-                    <button onclick="adjustZoom(0.1)" class="p-1.5 hover:bg-gray-600 rounded text-gray-300 transition-colors">
-                        <i class="fas fa-plus text-xs"></i>
-                    </button>
-                    <button onclick="resetZoom()" class="p-1.5 hover:bg-gray-600 rounded text-gray-300 transition-colors" title="Reset">
-                        <i class="fas fa-compress text-xs"></i>
-                    </button>
-                </div>
+                <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-700 rounded-lg text-gray-300 hover:text-white transition-colors" title="Toggle Details">
+                    <i class="fas fa-info-circle"></i>
+                </button>
                 
                 <div class="h-6 w-px bg-gray-600 hidden sm:block"></div>
                 
@@ -566,14 +701,20 @@
         </div>
 
         <div class="flex-1 overflow-auto flex items-start justify-center p-4 sm:p-8 relative bg-gray-900" id="viewerContainer">
-            <div id="viewerContent" class="w-full h-full flex items-start justify-center">
+            <div id="viewerContent" class="w-full h-full flex items-start justify-center transition-all duration-300">
             </div>
             
-            <div class="hidden xl:block fixed right-0 top-16 bottom-0 w-80 dark-glass border-l border-gray-700 p-6 overflow-y-auto custom-scrollbar">
-                <h3 class="text-white font-semibold mb-6 flex items-center gap-2">
-                    <i class="fas fa-info-circle text-primary-400"></i>
-                    Document Details
-                </h3>
+            <!-- Sidebar Panel -->
+            <div id="sidebarPanel" class="sidebar-panel fixed right-0 top-16 bottom-0 w-80 dark-glass border-l border-gray-700 p-6 overflow-y-auto custom-scrollbar z-40">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-white font-semibold flex items-center gap-2">
+                        <i class="fas fa-info-circle text-primary-400"></i>
+                        Document Details
+                    </h3>
+                    <button onclick="toggleSidebar()" class="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 
                 <div class="space-y-6">
                     <div>
@@ -613,6 +754,21 @@
                 </div>
             </div>
         </div>
+
+        <!-- Floating Zoom Controls -->
+        <div id="floatingZoomControls" class="zoom-controls-floating hidden">
+            <button onclick="adjustZoom(-0.1)" class="p-2 hover:bg-gray-700 rounded-lg text-gray-300 transition-colors">
+                <i class="fas fa-minus"></i>
+            </button>
+            <span id="zoomLevel" class="text-gray-300 text-sm w-16 text-center font-mono">100%</span>
+            <button onclick="adjustZoom(0.1)" class="p-2 hover:bg-gray-700 rounded-lg text-gray-300 transition-colors">
+                <i class="fas fa-plus"></i>
+            </button>
+            <div class="w-px h-6 bg-gray-600 mx-2"></div>
+            <button onclick="resetZoom()" class="p-2 hover:bg-gray-700 rounded-lg text-gray-300 transition-colors" title="Reset Zoom">
+                <i class="fas fa-compress"></i>
+            </button>
+        </div>
     </div>
 
     <!-- Multiple Upload Modal -->
@@ -651,15 +807,22 @@
 
                 <div id="uploadSettings" class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4 hidden">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Project (Applied to all files)</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Project</label>
                         <select id="uploadProject" class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white">
                             <option value="">No Project</option>
+                        </select>
+                    </div>
+
+                    <div id="subprojectSelectContainer" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Subproject</label>
+                        <select id="uploadSubproject" class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white">
+                            <option value="">No Subproject</option>
                         </select>
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                            Tags (Applied to all files) <span class="text-gray-400 font-normal">(press Enter to add)</span>
+                            Tags <span class="text-gray-400 font-normal">(press Enter to add)</span>
                         </label>
                         <div class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
                             <div id="tagContainer" class="flex flex-wrap gap-2 mb-2"></div>
@@ -728,6 +891,52 @@
         </div>
     </div>
 
+    <!-- Subproject Modal -->
+    <div id="subprojectModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl animate-slide-up theme-transition">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-t-2xl">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">New Subproject</h2>
+                <button onclick="closeSubprojectModal()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    <i class="fas fa-times text-gray-500 dark:text-gray-400"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="handleCreateSubproject(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Subproject Name *</label>
+                    <input type="text" id="subprojectName" required class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white" placeholder="e.g., Phase 1">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
+                    <textarea id="subprojectDescription" rows="3" class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all resize-none dark:text-white" placeholder="Subproject details..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Color</label>
+                    <div class="flex gap-3 flex-wrap">
+                        <button type="button" onclick="selectSubprojectColor('blue')" class="subproject-color-btn w-8 h-8 rounded-full bg-blue-500 ring-2 ring-offset-2 ring-blue-500 transition-all" data-color="blue"></button>
+                        <button type="button" onclick="selectSubprojectColor('green')" class="subproject-color-btn w-8 h-8 rounded-full bg-green-500 hover:ring-2 hover:ring-offset-2 hover:ring-green-500 transition-all" data-color="green"></button>
+                        <button type="button" onclick="selectSubprojectColor('purple')" class="subproject-color-btn w-8 h-8 rounded-full bg-purple-500 hover:ring-2 hover:ring-offset-2 hover:ring-purple-500 transition-all" data-color="purple"></button>
+                        <button type="button" onclick="selectSubprojectColor('red')" class="subproject-color-btn w-8 h-8 rounded-full bg-red-500 hover:ring-2 hover:ring-offset-2 hover:ring-red-500 transition-all" data-color="red"></button>
+                        <button type="button" onclick="selectSubprojectColor('yellow')" class="subproject-color-btn w-8 h-8 rounded-full bg-yellow-500 hover:ring-2 hover:ring-offset-2 hover:ring-yellow-500 transition-all" data-color="yellow"></button>
+                    </div>
+                    <input type="hidden" id="subprojectColor" value="blue">
+                    <input type="hidden" id="subprojectParentId" value="">
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeSubprojectModal()" class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all shadow-lg">
+                        Create Subproject
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm shadow-2xl animate-slide-up p-6 text-center theme-transition">
@@ -750,7 +959,7 @@
     <script>
         // Database Management
         const DB_NAME = 'ProjectVaultDB';
-        const DB_VERSION = 4;
+        const DB_VERSION = 5;
         let db;
         let currentUser = null;
         let currentFilter = null;
@@ -760,9 +969,15 @@
         let deleteTargetId = null;
         let uploadTags = [];
         let projectsCache = [];
+        let subprojectsCache = [];
         let pdfDoc = null;
         let pdfPages = [];
         let selectedFiles = [];
+        let currentSection = 'all';
+        let currentProjectId = null;
+        let currentSubprojectId = null;
+        let sidebarVisible = true;
+        let zoomWithMouse = false;
 
         function initDB() {
             return new Promise((resolve, reject) => {
@@ -786,18 +1001,26 @@
                         const docStore = database.createObjectStore('documents', { keyPath: 'id', autoIncrement: true });
                         docStore.createIndex('userId', 'userId', { unique: false });
                         docStore.createIndex('projectId', 'projectId', { unique: false });
+                        docStore.createIndex('subprojectId', 'subprojectId', { unique: false });
                         docStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
                     } else {
                         const transaction = event.target.transaction;
                         const docStore = transaction.objectStore('documents');
-                        if (!docStore.indexNames.contains('projectId')) {
-                            docStore.createIndex('projectId', 'projectId', { unique: false });
+                        if (!docStore.indexNames.contains('subprojectId')) {
+                            docStore.createIndex('subprojectId', 'subprojectId', { unique: false });
                         }
                     }
                     
                     if (!database.objectStoreNames.contains('projects')) {
                         const projStore = database.createObjectStore('projects', { keyPath: 'id', autoIncrement: true });
                         projStore.createIndex('userId', 'userId', { unique: false });
+                        projStore.createIndex('parentId', 'parentId', { unique: false });
+                    } else {
+                        const transaction = event.target.transaction;
+                        const projStore = transaction.objectStore('projects');
+                        if (!projStore.indexNames.contains('parentId')) {
+                            projStore.createIndex('parentId', 'parentId', { unique: false });
+                        }
                     }
 
                     if (!database.objectStoreNames.contains('settings')) {
@@ -927,6 +1150,7 @@
         function logout() {
             currentUser = null;
             projectsCache = [];
+            subprojectsCache = [];
             localStorage.removeItem('currentUser');
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('dashboardPage').classList.add('hidden');
@@ -941,9 +1165,41 @@
             document.getElementById('dashboardPage').classList.remove('hidden');
             document.getElementById('viewerPage').classList.add('hidden');
             document.getElementById('userEmail').textContent = currentUser.email;
+            
+            // Reset views
+            currentProjectId = null;
+            currentSubprojectId = null;
+            document.getElementById('breadcrumb').classList.add('hidden');
+            
             await loadProjects();
-            await loadDocuments();
+            switchSection('all');
             updateStorageInfo();
+        }
+
+        function switchSection(section) {
+            currentSection = section;
+            
+            // Update tab styles
+            document.querySelectorAll('.section-tab').forEach(tab => {
+                tab.classList.remove('border-primary-500', 'text-primary-600', 'dark:text-primary-400');
+                tab.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            });
+            
+            document.getElementById(`section-${section}`).classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            document.getElementById(`section-${section}`).classList.add('border-primary-500', 'text-primary-600', 'dark:text-primary-400');
+            
+            // Show/hide views
+            if (section === 'all') {
+                document.getElementById('allDocumentsView').classList.remove('hidden');
+                document.getElementById('projectsView').classList.add('hidden');
+                document.getElementById('projectDetailView').classList.add('hidden');
+                loadDocuments();
+            } else if (section === 'projects') {
+                document.getElementById('allDocumentsView').classList.add('hidden');
+                document.getElementById('projectsView').classList.remove('hidden');
+                document.getElementById('projectDetailView').classList.add('hidden');
+                renderProjectsList();
+            }
         }
 
         async function loadProjects() {
@@ -954,36 +1210,182 @@
                 const request = index.getAll(currentUser.email);
                 
                 request.onsuccess = () => {
-                    projectsCache = request.result || [];
-                    renderProjectFilters(projectsCache);
-                    populateProjectSelect(projectsCache);
+                    const allProjects = request.result || [];
+                    // Separate main projects and subprojects
+                    projectsCache = allProjects.filter(p => !p.parentId);
+                    subprojectsCache = allProjects.filter(p => p.parentId);
                     resolve(projectsCache);
                 };
             });
         }
 
-        function renderProjectFilters(projects) {
-            const container = document.getElementById('filterContainer');
-            let html = `
-                <button onclick="filterByProject(null)" id="filter-all" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-all ${!currentFilter ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'}">
-                    All Documents
-                </button>
-            `;
+        function renderProjectsList() {
+            const container = document.getElementById('projectsContainer');
+            const emptyState = document.getElementById('emptyProjectsState');
             
-            html += projects.map(p => `
-                <button onclick="filterByProject(${p.id})" id="filter-${p.id}" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${currentFilter === p.id ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'}">
-                    <span class="w-2 h-2 rounded-full bg-${p.color}-500"></span>
-                    ${escapeHtml(p.name)}
-                </button>
-            `).join('');
+            if (projectsCache.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
             
-            container.innerHTML = html;
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = projectsCache.map(project => {
+                const subprojects = subprojectsCache.filter(sp => sp.parentId === project.id);
+                return `
+                    <div class="folder-card bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 cursor-pointer hover:border-primary-500 dark:hover:border-primary-500 theme-transition" onclick="openProject(${project.id})">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="w-14 h-14 rounded-lg bg-${project.color}-100 dark:bg-${project.color}-900/30 flex items-center justify-center">
+                                <i class="fas fa-folder text-3xl text-${project.color}-500"></i>
+                            </div>
+                            <span class="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                                ${subprojects.length} subprojects
+                            </span>
+                        </div>
+                        <h3 class="font-semibold text-gray-900 dark:text-white mb-1 truncate" title="${escapeHtml(project.name)}">${escapeHtml(project.name)}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 h-10">${escapeHtml(project.description || 'No description')}</p>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function populateProjectSelect(projects) {
-            const select = document.getElementById('uploadProject');
-            select.innerHTML = '<option value="">No Project</option>' + 
-                projects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+        async function openProject(projectId) {
+            currentProjectId = projectId;
+            const project = projectsCache.find(p => p.id === projectId);
+            if (!project) return;
+            
+            // Show project detail view
+            document.getElementById('allDocumentsView').classList.add('hidden');
+            document.getElementById('projectsView').classList.add('hidden');
+            document.getElementById('projectDetailView').classList.remove('hidden');
+            
+            // Update breadcrumb
+            document.getElementById('breadcrumb').classList.remove('hidden');
+            document.getElementById('breadcrumbProject').textContent = project.name;
+            document.getElementById('breadcrumbSubproject').classList.add('hidden');
+            
+            // Update header
+            document.getElementById('projectDetailTitle').textContent = project.name;
+            document.getElementById('projectDetailDesc').textContent = project.description || 'No description';
+            
+            // Load subprojects and documents
+            await renderSubprojects(projectId);
+            await loadProjectDocuments(projectId);
+        }
+
+        async function renderSubprojects(parentId) {
+            const container = document.getElementById('subprojectsContainer');
+            const subprojects = subprojectsCache.filter(sp => sp.parentId === parentId);
+            
+            if (subprojects.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm col-span-full">No subprojects yet</p>';
+                return;
+            }
+            
+            container.innerHTML = subprojects.map(sp => `
+                <div class="folder-card bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 cursor-pointer hover:border-primary-500 dark:hover:border-primary-500 theme-transition" onclick="openSubproject(${sp.id})">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-${sp.color}-100 dark:bg-${sp.color}-900/30 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-folder-open text-${sp.color}-500"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-medium text-gray-900 dark:text-white text-sm truncate">${escapeHtml(sp.name)}</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${escapeHtml(sp.description || '')}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function openSubproject(subprojectId) {
+            currentSubprojectId = subprojectId;
+            const subproject = subprojectsCache.find(sp => sp.id === subprojectId);
+            if (!subproject) return;
+            
+            // Update breadcrumb
+            document.getElementById('breadcrumbSubproject').classList.remove('hidden');
+            document.getElementById('breadcrumbSubprojectName').textContent = subproject.name;
+            
+            // Update view
+            document.getElementById('addSubprojectBtn').classList.add('hidden');
+            document.getElementById('subprojectsSection').classList.add('hidden');
+            document.getElementById('projectDetailTitle').textContent = subproject.name;
+            document.getElementById('projectDetailDesc').textContent = subproject.description || 'No description';
+            
+            // Load documents for subproject only
+            await loadProjectDocuments(null, subprojectId);
+        }
+
+        function navigateToRoot() {
+            currentProjectId = null;
+            currentSubprojectId = null;
+            document.getElementById('breadcrumb').classList.add('hidden');
+            document.getElementById('addSubprojectBtn').classList.remove('hidden');
+            document.getElementById('subprojectsSection').classList.remove('hidden');
+            switchSection('projects');
+        }
+
+        async function loadProjectDocuments(projectId, subprojectId) {
+            const transaction = db.transaction(['documents'], 'readonly');
+            const store = transaction.objectStore('documents');
+            const index = store.index('userId');
+            const request = index.getAll(currentUser.email);
+            
+            request.onsuccess = () => {
+                let docs = request.result || [];
+                
+                // Filter by project/subproject
+                if (subprojectId) {
+                    docs = docs.filter(d => d.subprojectId == subprojectId);
+                } else if (projectId) {
+                    docs = docs.filter(d => d.projectId == projectId && !d.subprojectId);
+                }
+                
+                renderProjectDocuments(docs);
+            };
+        }
+
+        function renderProjectDocuments(docs) {
+            const container = document.getElementById('projectDocumentsContainer');
+            const emptyState = document.getElementById('emptyProjectDocs');
+            
+            docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            if (docs.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = docs.map(doc => {
+                const icon = getFileIcon(doc.fileType);
+                return `
+                    <div class="file-card bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 relative group cursor-pointer theme-transition" onclick="viewDocument(${doc.id})">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center">
+                                <i class="${icon} text-xl text-primary-600"></i>
+                            </div>
+                            <button onclick="event.stopPropagation(); showDeleteModal(${doc.id})" class="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-600 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                                <i class="fas fa-trash-alt text-sm"></i>
+                            </button>
+                        </div>
+                        <h3 class="font-medium text-gray-900 dark:text-white text-sm mb-1 truncate" title="${escapeHtml(doc.name)}">${escapeHtml(doc.name)}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-1">${escapeHtml(doc.description || 'No description')}</p>
+                        <div class="flex flex-wrap gap-1">
+                            ${(doc.tags || []).slice(0, 2).map(tag => `
+                                <span class="px-1.5 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded">#${escapeHtml(tag)}</span>
+                            `).join('')}
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                            <span>${formatDate(doc.createdAt)}</span>
+                            <span>${formatSize(doc.fileSize)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         async function loadDocuments() {
@@ -1010,8 +1412,7 @@
                     doc.name.toLowerCase().includes(searchQuery) ||
                     (doc.description && doc.description.toLowerCase().includes(searchQuery)) ||
                     (doc.tags && doc.tags.some(t => t.toLowerCase().includes(searchQuery)));
-                const matchesProject = !currentFilter || doc.projectId == currentFilter;
-                return matchesSearch && matchesProject;
+                return matchesSearch;
             });
             
             filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -1032,6 +1433,7 @@
                 container.innerHTML = filtered.map(doc => {
                     const icon = getFileIcon(doc.fileType);
                     const project = projectsCache.find(p => p.id == doc.projectId);
+                    const subproject = subprojectsCache.find(sp => sp.id == doc.subprojectId);
                     return `
                         <div class="file-card bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 relative group cursor-pointer theme-transition" onclick="viewDocument(${doc.id})">
                             <div class="flex items-start justify-between mb-4">
@@ -1048,7 +1450,7 @@
                                 <div class="flex items-center gap-2 mb-3">
                                     <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md flex items-center gap-1">
                                         <span class="w-1.5 h-1.5 rounded-full bg-${project.color}-500"></span>
-                                        ${escapeHtml(project.name)}
+                                        ${escapeHtml(project.name)}${subproject ? ' / ' + escapeHtml(subproject.name) : ''}
                                     </span>
                                 </div>
                             ` : ''}
@@ -1082,6 +1484,7 @@
                             ${filtered.map(doc => {
                                 const icon = getFileIcon(doc.fileType);
                                 const project = projectsCache.find(p => p.id == doc.projectId);
+                                const subproject = subprojectsCache.find(sp => sp.id == doc.subprojectId);
                                 return `
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group" onclick="viewDocument(${doc.id})">
                                         <td class="px-6 py-4">
@@ -1094,7 +1497,7 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 hidden md:table-cell">
-                                            ${project ? `<span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-${project.color}-500"></span>${escapeHtml(project.name)}</span>` : '-'}
+                                            ${project ? `<span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-${project.color}-500"></span>${escapeHtml(project.name)}${subproject ? ' / ' + escapeHtml(subproject.name) : ''}</span>` : '-'}
                                         </td>
                                         <td class="px-6 py-4 hidden sm:table-cell">
                                             <div class="flex gap-1 flex-wrap">
@@ -1143,11 +1546,6 @@
             loadDocuments();
         }
 
-        function filterByProject(projectId) {
-            currentFilter = projectId;
-            loadProjects().then(() => loadDocuments());
-        }
-
         function setViewMode(mode) {
             viewMode = mode;
             document.getElementById('viewGrid').className = `p-2 rounded-md transition-colors ${mode === 'grid' ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`;
@@ -1161,15 +1559,49 @@
             uploadTags = [];
             renderTags();
             document.getElementById('fileInput').value = '';
-            document.getElementById('uploadProject').value = '';
+            document.getElementById('uploadProject').value = currentProjectId || '';
+            document.getElementById('uploadSubproject').value = currentSubprojectId || '';
             updateFileList();
             document.getElementById('uploadSettings').classList.add('hidden');
             document.getElementById('uploadSubmitBtn').disabled = true;
+            
+            // Populate project select
+            populateProjectSelect();
+            
+            // Show/hide subproject select based on project selection
+            updateSubprojectSelect();
         }
 
         function closeUploadModal() {
             document.getElementById('uploadModal').classList.add('hidden');
             selectedFiles = [];
+        }
+
+        function populateProjectSelect() {
+            const select = document.getElementById('uploadProject');
+            select.innerHTML = '<option value="">No Project</option>' + 
+                projectsCache.map(p => `<option value="${p.id}" ${currentProjectId == p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
+            
+            select.onchange = updateSubprojectSelect;
+        }
+
+        function updateSubprojectSelect() {
+            const projectId = document.getElementById('uploadProject').value;
+            const container = document.getElementById('subprojectSelectContainer');
+            const select = document.getElementById('uploadSubproject');
+            
+            if (projectId) {
+                const subprojects = subprojectsCache.filter(sp => sp.parentId == projectId);
+                if (subprojects.length > 0) {
+                    container.classList.remove('hidden');
+                    select.innerHTML = '<option value="">No Subproject</option>' +
+                        subprojects.map(sp => `<option value="${sp.id}" ${currentSubprojectId == sp.id ? 'selected' : ''}>${escapeHtml(sp.name)}</option>`).join('');
+                } else {
+                    container.classList.add('hidden');
+                }
+            } else {
+                container.classList.add('hidden');
+            }
         }
 
         function handleFileSelect(input) {
@@ -1258,6 +1690,7 @@
             btn.disabled = true;
             
             const projectId = document.getElementById('uploadProject').value ? parseInt(document.getElementById('uploadProject').value) : null;
+            const subprojectId = document.getElementById('uploadSubproject').value ? parseInt(document.getElementById('uploadSubproject').value) : null;
             
             try {
                 for (const item of selectedFiles) {
@@ -1271,6 +1704,7 @@
                         fileName: item.file.name,
                         fileSize: item.file.size,
                         projectId: projectId,
+                        subprojectId: subprojectId,
                         tags: uploadTags,
                         createdAt: new Date().toISOString()
                     };
@@ -1285,7 +1719,17 @@
                 }
                 
                 closeUploadModal();
-                await loadDocuments();
+                
+                // Refresh current view
+                if (currentProjectId) {
+                    if (currentSubprojectId) {
+                        await loadProjectDocuments(null, currentSubprojectId);
+                    } else {
+                        await loadProjectDocuments(currentProjectId);
+                    }
+                } else {
+                    await loadDocuments();
+                }
                 updateStorageInfo();
             } catch (error) {
                 console.error('Upload error:', error);
@@ -1349,6 +1793,59 @@
             
             closeProjectModal();
             await loadProjects();
+            if (currentSection === 'projects') {
+                renderProjectsList();
+            }
+        }
+
+        function openSubprojectModal() {
+            if (!currentProjectId) return;
+            document.getElementById('subprojectModal').classList.remove('hidden');
+            document.getElementById('subprojectName').value = '';
+            document.getElementById('subprojectDescription').value = '';
+            document.getElementById('subprojectParentId').value = currentProjectId;
+            selectSubprojectColor('blue');
+        }
+
+        function closeSubprojectModal() {
+            document.getElementById('subprojectModal').classList.add('hidden');
+        }
+
+        function selectSubprojectColor(color) {
+            document.getElementById('subprojectColor').value = color;
+            document.querySelectorAll('.subproject-color-btn').forEach(btn => {
+                if (btn.dataset.color === color) {
+                    btn.classList.add('ring-2', 'ring-offset-2');
+                    btn.classList.remove('hover:ring-2', 'hover:ring-offset-2');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-offset-2');
+                    btn.classList.add('hover:ring-2', 'hover:ring-offset-2');
+                }
+            });
+        }
+
+        async function handleCreateSubproject(e) {
+            e.preventDefault();
+            const subproject = {
+                userId: currentUser.email,
+                parentId: parseInt(document.getElementById('subprojectParentId').value),
+                name: document.getElementById('subprojectName').value,
+                description: document.getElementById('subprojectDescription').value,
+                color: document.getElementById('subprojectColor').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            await new Promise((resolve, reject) => {
+                const transaction = db.transaction(['projects'], 'readwrite');
+                const store = transaction.objectStore('projects');
+                const request = store.add(subproject);
+                request.onsuccess = resolve;
+                request.onerror = () => reject(request.error);
+            });
+            
+            closeSubprojectModal();
+            await loadProjects();
+            await renderSubprojects(currentProjectId);
         }
 
         async function viewDocument(id) {
@@ -1364,6 +1861,7 @@
                 currentZoom = 1;
                 pdfDoc = null;
                 pdfPages = [];
+                sidebarVisible = true;
                 
                 document.getElementById('dashboardPage').classList.add('hidden');
                 document.getElementById('viewerPage').classList.remove('hidden');
@@ -1373,8 +1871,9 @@
                 document.getElementById('sidebarDescription').textContent = doc.description || 'No description';
                 
                 const project = projectsCache.find(p => p.id == doc.projectId);
+                const subproject = subprojectsCache.find(sp => sp.id == doc.subprojectId);
                 document.getElementById('sidebarProject').innerHTML = project 
-                    ? `<span class="w-2 h-2 rounded-full bg-${project.color}-500"></span>${escapeHtml(project.name)}`
+                    ? `<span class="w-2 h-2 rounded-full bg-${project.color}-500"></span>${escapeHtml(project.name)}${subproject ? ' / ' + escapeHtml(subproject.name) : ''}`
                     : `<span class="w-2 h-2 rounded-full bg-gray-500"></span>None`;
                 
                 document.getElementById('sidebarTags').innerHTML = (doc.tags || []).map(tag => 
@@ -1385,18 +1884,36 @@
                 document.getElementById('sidebarSize').textContent = formatSize(doc.fileSize);
                 document.getElementById('sidebarType').textContent = doc.fileType || 'Unknown';
                 
+                // Show sidebar by default
+                const sidebar = document.getElementById('sidebarPanel');
+                sidebar.classList.remove('sidebar-hidden');
+                
                 renderViewerContent(doc);
             };
         }
 
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebarPanel');
+            sidebarVisible = !sidebarVisible;
+            
+            if (sidebarVisible) {
+                sidebar.classList.remove('sidebar-hidden');
+            } else {
+                sidebar.classList.add('sidebar-hidden');
+            }
+        }
+
         async function renderViewerContent(doc) {
             const container = document.getElementById('viewerContent');
-            const zoomControls = document.getElementById('zoomControls');
+            const floatingZoom = document.getElementById('floatingZoomControls');
             document.getElementById('zoomLevel').textContent = '100%';
+            
+            // Enable mouse wheel zoom
+            zoomWithMouse = true;
             
             // PDF Viewer
             if (doc.fileType === 'application/pdf' || doc.fileName.toLowerCase().endsWith('.pdf')) {
-                zoomControls.classList.remove('hidden');
+                floatingZoom.classList.remove('hidden');
                 container.innerHTML = '<div id="pdfViewer" class="pdf-loading"><div class="loader mx-auto mb-4"></div><p class="text-white">Loading PDF...</p></div>';
                 
                 try {
@@ -1422,6 +1939,8 @@
                         pdfViewer.appendChild(canvas);
                         pdfPages.push(canvas);
                     }
+                    
+                    setupMouseWheelZoom();
                 } catch (error) {
                     container.innerHTML = `
                         <div class="text-center text-white p-8">
@@ -1431,9 +1950,10 @@
                                 <i class="fas fa-download mr-2"></i> Download PDF
                             </button>
                         </div>`;
+                    floatingZoom.classList.add('hidden');
                 }
             }
-            // Excel/Spreadsheet Viewer with SheetJS
+            // Excel/Spreadsheet Viewer
             else if (doc.fileType && (
                 doc.fileType.includes('excel') || 
                 doc.fileType.includes('spreadsheet') ||
@@ -1443,7 +1963,8 @@
                 doc.fileName.toLowerCase().endsWith('.xls') ||
                 doc.fileName.toLowerCase().endsWith('.csv')
             )) {
-                zoomControls.classList.add('hidden');
+                floatingZoom.classList.add('hidden');
+                zoomWithMouse = false;
                 container.innerHTML = '<div class="text-center text-white p-8"><div class="loader mx-auto mb-4"></div><p>Loading Excel file...</p></div>';
                 
                 try {
@@ -1459,8 +1980,6 @@
                     
                     const displayData = jsonData.slice(0, 100);
                     const hasMore = jsonData.length > 100;
-                    
-                    // Calculate column widths
                     const maxCols = Math.max(...displayData.map(row => row.length), 0);
                     
                     let tableHtml = `
@@ -1510,7 +2029,6 @@
                     
                     container.innerHTML = tableHtml;
                 } catch (error) {
-                    console.error('Excel loading error:', error);
                     container.innerHTML = `
                         <div class="text-center text-white p-8">
                             <i class="fas fa-file-excel text-6xl text-green-500 mb-4"></i>
@@ -1524,12 +2042,15 @@
             }
             // Image Viewer
             else if (doc.fileType && doc.fileType.startsWith('image/')) {
-                zoomControls.classList.remove('hidden');
+                floatingZoom.classList.remove('hidden');
                 container.innerHTML = `
-                    <img src="${doc.fileData}" 
-                         style="transform: scale(${currentZoom}); transition: transform 0.2s; max-height: 85vh; max-width: 90%;" 
-                         class="object-contain rounded-lg shadow-2xl"
-                         id="viewerMedia">`;
+                    <div class="relative overflow-auto max-w-full max-h-full" id="imageContainer">
+                        <img src="${doc.fileData}" 
+                             style="transform: scale(${currentZoom}); transition: transform 0.2s; max-height: 85vh; max-width: 90%;" 
+                             class="object-contain rounded-lg shadow-2xl"
+                             id="viewerMedia">
+                    </div>`;
+                setupMouseWheelZoom();
             }
             // Text Viewer
             else if (doc.fileType && (
@@ -1542,7 +2063,8 @@
                 doc.fileName.endsWith('.css') ||
                 doc.fileName.endsWith('.html')
             )) {
-                zoomControls.classList.add('hidden');
+                floatingZoom.classList.add('hidden');
+                zoomWithMouse = false;
                 try {
                     const base64Content = doc.fileData.split(',')[1];
                     const textContent = atob(base64Content);
@@ -1565,7 +2087,8 @@
             }
             // Word/Documents
             else if (doc.fileType && (doc.fileType.includes('word') || doc.fileType.includes('officedocument'))) {
-                zoomControls.classList.add('hidden');
+                floatingZoom.classList.add('hidden');
+                zoomWithMouse = false;
                 container.innerHTML = `
                     <div class="text-center text-white p-8">
                         <i class="fas fa-file-word text-6xl text-blue-500 mb-6"></i>
@@ -1579,7 +2102,8 @@
             }
             // Default
             else {
-                zoomControls.classList.add('hidden');
+                floatingZoom.classList.add('hidden');
+                zoomWithMouse = false;
                 container.innerHTML = `
                     <div class="text-center text-white p-8">
                         <i class="fas fa-file text-6xl text-gray-600 mb-4"></i>
@@ -1591,6 +2115,18 @@
                         </button>
                     </div>`;
             }
+        }
+
+        function setupMouseWheelZoom() {
+            const container = document.getElementById('viewerContainer');
+            
+            container.onwheel = (e) => {
+                if (!zoomWithMouse) return;
+                
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                adjustZoom(delta);
+            };
         }
 
         async function adjustZoom(delta) {
@@ -1627,9 +2163,16 @@
         function closeViewer() {
             document.getElementById('viewerPage').classList.add('hidden');
             document.getElementById('dashboardPage').classList.remove('hidden');
+            document.getElementById('floatingZoomControls').classList.add('hidden');
+            
+            // Remove wheel event listener
+            const container = document.getElementById('viewerContainer');
+            container.onwheel = null;
+            
             currentDoc = null;
             pdfDoc = null;
             pdfPages = [];
+            zoomWithMouse = false;
         }
 
         function downloadCurrentFile() {
@@ -1662,7 +2205,17 @@
                 request.onerror = () => reject(request.error);
             });
             closeDeleteModal();
-            await loadDocuments();
+            
+            // Refresh current view
+            if (currentProjectId) {
+                if (currentSubprojectId) {
+                    await loadProjectDocuments(null, currentSubprojectId);
+                } else {
+                    await loadProjectDocuments(currentProjectId);
+                }
+            } else {
+                await loadDocuments();
+            }
             updateStorageInfo();
         }
 
@@ -1744,6 +2297,7 @@
                 if (!document.getElementById('viewerPage').classList.contains('hidden')) closeViewer();
                 else if (!document.getElementById('uploadModal').classList.contains('hidden')) closeUploadModal();
                 else if (!document.getElementById('projectModal').classList.contains('hidden')) closeProjectModal();
+                else if (!document.getElementById('subprojectModal').classList.contains('hidden')) closeSubprojectModal();
                 else if (!document.getElementById('deleteModal').classList.contains('hidden')) closeDeleteModal();
             }
             if ((e.ctrlKey || e.metaKey) && !document.getElementById('dashboardPage').classList.contains('hidden')) {
@@ -1770,7 +2324,15 @@
 
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && currentUser) {
-                loadDocuments();
+                if (currentSection === 'all') {
+                    loadDocuments();
+                } else if (currentProjectId) {
+                    if (currentSubprojectId) {
+                        loadProjectDocuments(null, currentSubprojectId);
+                    } else {
+                        loadProjectDocuments(currentProjectId);
+                    }
+                }
                 updateStorageInfo();
             }
         });
