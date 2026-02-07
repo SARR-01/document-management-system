@@ -364,7 +364,6 @@
             background: #fee2e2;
         }
 
-        /* Ensure proper display on mobile */
         @media (max-width: 640px) {
             .excel-table {
                 font-size: 11px;
@@ -374,7 +373,6 @@
             }
         }
 
-        /* Sidebar toggle animation */
         .sidebar-panel {
             transition: transform 0.3s ease, width 0.3s ease;
         }
@@ -386,7 +384,6 @@
             opacity: 0;
         }
 
-        /* Zoom controls floating */
         .zoom-controls-floating {
             position: fixed;
             bottom: 24px;
@@ -423,6 +420,18 @@
             margin-left: 16px;
             padding-left: 16px;
             margin-top: 8px;
+        }
+
+        /* Smooth zoom transitions */
+        .zoomable-content {
+            transition: transform 0.1s ease-out;
+            transform-origin: center top;
+        }
+
+        /* PDF page optimization */
+        .pdf-page {
+            will-change: transform;
+            backface-visibility: hidden;
         }
     </style>
 </head>
@@ -544,23 +553,24 @@
             <div id="breadcrumb" class="flex items-center gap-2 mb-6 text-sm text-gray-600 dark:text-gray-400 hidden">
                 <span class="breadcrumb-item hover:text-primary-600" onclick="navigateToRoot()">All Documents</span>
                 <i class="fas fa-chevron-right text-xs"></i>
-                <span id="breadcrumbProject" class="breadcrumb-item hover:text-primary-600"></span>
+                <span id="breadcrumbProject" class="breadcrumb-item hover:text-primary-600" onclick="navigateToProject()"></span>
                 <span id="breadcrumbSubproject" class="hidden">
                     <i class="fas fa-chevron-right text-xs mx-2"></i>
                     <span class="text-primary-600 font-medium" id="breadcrumbSubprojectName"></span>
                 </span>
             </div>
 
+            <!-- Search and Action Bar -->
             <div class="flex flex-col md:flex-row gap-4 mb-8">
                 <div class="flex-1 relative">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search by name, description, or tags..." class="w-full pl-12 pr-10 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all shadow-sm text-lg dark:text-white dark:placeholder-gray-500">
+                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search by name, description, tags, project..." class="w-full pl-12 pr-10 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all shadow-sm text-lg dark:text-white dark:placeholder-gray-500">
                     <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
-                <div class="flex gap-3">
+                <div class="flex gap-3" id="actionButtons">
                     <button onclick="openProjectModal()" class="px-5 py-2.5 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium rounded-xl border border-gray-200 dark:border-gray-700 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
                         <i class="fas fa-plus"></i>
                         <span class="hidden sm:inline">New Project</span>
@@ -573,7 +583,7 @@
             </div>
 
             <!-- Section Tabs -->
-            <div class="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700" id="sectionTabs">
                 <button onclick="switchSection('all')" id="section-all" class="section-tab px-4 py-3 text-sm font-medium border-b-2 border-primary-500 text-primary-600 dark:text-primary-400">
                     <i class="fas fa-th-large mr-2"></i>All Documents
                 </button>
@@ -637,7 +647,7 @@
                         <h2 id="projectDetailTitle" class="text-2xl font-bold text-gray-900 dark:text-white"></h2>
                         <p id="projectDetailDesc" class="text-gray-500 dark:text-gray-400 mt-1"></p>
                     </div>
-                    <div class="flex gap-3">
+                    <div class="flex gap-3" id="projectActionButtons">
                         <button onclick="openSubprojectModal()" id="addSubprojectBtn" class="px-4 py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium rounded-lg border border-gray-200 dark:border-gray-700 transition-all flex items-center gap-2">
                             <i class="fas fa-folder-plus"></i>
                             <span class="hidden sm:inline">Add Subproject</span>
@@ -733,6 +743,11 @@
                     <div>
                         <label class="text-gray-400 text-xs uppercase tracking-wider font-medium">Tags</label>
                         <div id="sidebarTags" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+
+                    <div>
+                        <label class="text-gray-400 text-xs uppercase tracking-wider font-medium">Uploaded By</label>
+                        <p id="sidebarUploader" class="text-gray-200 mt-2 text-sm"></p>
                     </div>
                     
                     <div class="pt-4 border-t border-gray-700">
@@ -959,7 +974,7 @@
     <script>
         // Database Management
         const DB_NAME = 'ProjectVaultDB';
-        const DB_VERSION = 5;
+        const DB_VERSION = 6;
         let db;
         let currentUser = null;
         let currentFilter = null;
@@ -978,6 +993,7 @@
         let currentSubprojectId = null;
         let sidebarVisible = true;
         let zoomWithMouse = false;
+        let allDocumentsCache = [];
 
         function initDB() {
             return new Promise((resolve, reject) => {
@@ -1151,6 +1167,7 @@
             currentUser = null;
             projectsCache = [];
             subprojectsCache = [];
+            allDocumentsCache = [];
             localStorage.removeItem('currentUser');
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('dashboardPage').classList.add('hidden');
@@ -1170,6 +1187,10 @@
             currentProjectId = null;
             currentSubprojectId = null;
             document.getElementById('breadcrumb').classList.add('hidden');
+            
+            // Show action buttons and tabs
+            document.getElementById('actionButtons').classList.remove('hidden');
+            document.getElementById('sectionTabs').classList.remove('hidden');
             
             await loadProjects();
             switchSection('all');
@@ -1252,8 +1273,12 @@
 
         async function openProject(projectId) {
             currentProjectId = projectId;
+            currentSubprojectId = null;
             const project = projectsCache.find(p => p.id === projectId);
             if (!project) return;
+            
+            // Hide section tabs when in project detail
+            document.getElementById('sectionTabs').classList.add('hidden');
             
             // Show project detail view
             document.getElementById('allDocumentsView').classList.add('hidden');
@@ -1269,6 +1294,11 @@
             document.getElementById('projectDetailTitle').textContent = project.name;
             document.getElementById('projectDetailDesc').textContent = project.description || 'No description';
             
+            // Show action buttons
+            document.getElementById('actionButtons').classList.remove('hidden');
+            document.getElementById('addSubprojectBtn').classList.remove('hidden');
+            document.getElementById('subprojectsSection').classList.remove('hidden');
+            
             // Load subprojects and documents
             await renderSubprojects(projectId);
             await loadProjectDocuments(projectId);
@@ -1276,7 +1306,8 @@
 
         async function renderSubprojects(parentId) {
             const container = document.getElementById('subprojectsContainer');
-            const subprojects = subprojectsCache.filter(sp => sp.parentId === parentId);
+            // Filter subprojects for current user and parent
+            const subprojects = subprojectsCache.filter(sp => sp.parentId === parentId && sp.userId === currentUser.email);
             
             if (subprojects.length === 0) {
                 container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm col-span-full">No subprojects yet</p>';
@@ -1307,6 +1338,9 @@
             document.getElementById('breadcrumbSubproject').classList.remove('hidden');
             document.getElementById('breadcrumbSubprojectName').textContent = subproject.name;
             
+            // Hide action buttons (New Project and Upload) - only show search
+            document.getElementById('actionButtons').classList.add('hidden');
+            
             // Update view
             document.getElementById('addSubprojectBtn').classList.add('hidden');
             document.getElementById('subprojectsSection').classList.add('hidden');
@@ -1321,9 +1355,16 @@
             currentProjectId = null;
             currentSubprojectId = null;
             document.getElementById('breadcrumb').classList.add('hidden');
-            document.getElementById('addSubprojectBtn').classList.remove('hidden');
-            document.getElementById('subprojectsSection').classList.remove('hidden');
+            document.getElementById('actionButtons').classList.remove('hidden');
+            document.getElementById('sectionTabs').classList.remove('hidden');
             switchSection('projects');
+        }
+
+        function navigateToProject() {
+            if (currentProjectId) {
+                currentSubprojectId = null;
+                openProject(currentProjectId);
+            }
         }
 
         async function loadProjectDocuments(projectId, subprojectId) {
@@ -1374,7 +1415,7 @@
                         </div>
                         <h3 class="font-medium text-gray-900 dark:text-white text-sm mb-1 truncate" title="${escapeHtml(doc.name)}">${escapeHtml(doc.name)}</h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-1">${escapeHtml(doc.description || 'No description')}</p>
-                        <div class="flex flex-wrap gap-1">
+                        <div class="flex flex-wrap gap-1 mb-2">
                             ${(doc.tags || []).slice(0, 2).map(tag => `
                                 <span class="px-1.5 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded">#${escapeHtml(tag)}</span>
                             `).join('')}
@@ -1396,8 +1437,9 @@
                 const request = index.getAll(currentUser.email);
                 
                 request.onsuccess = () => {
-                    renderDocuments(request.result || []);
-                    resolve(request.result || []);
+                    allDocumentsCache = request.result || [];
+                    renderDocuments(allDocumentsCache);
+                    resolve(allDocumentsCache);
                 };
             });
         }
@@ -1412,7 +1454,18 @@
                     doc.name.toLowerCase().includes(searchQuery) ||
                     (doc.description && doc.description.toLowerCase().includes(searchQuery)) ||
                     (doc.tags && doc.tags.some(t => t.toLowerCase().includes(searchQuery)));
-                return matchesSearch;
+                
+                // Also search by project/subproject name
+                let matchesProject = true;
+                if (searchQuery) {
+                    const project = projectsCache.find(p => p.id == doc.projectId);
+                    const subproject = subprojectsCache.find(sp => sp.id == doc.subprojectId);
+                    const projectNameMatch = project && project.name.toLowerCase().includes(searchQuery);
+                    const subprojectNameMatch = subproject && subproject.name.toLowerCase().includes(searchQuery);
+                    matchesProject = projectNameMatch || subprojectNameMatch;
+                }
+                
+                return matchesSearch || matchesProject;
             });
             
             filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -1537,13 +1590,43 @@
 
         function handleSearch() {
             document.getElementById('clearSearchBtn').classList.toggle('hidden', !document.getElementById('searchInput').value);
-            loadDocuments();
+            
+            if (currentSection === 'all') {
+                renderDocuments(allDocumentsCache);
+            } else if (currentProjectId) {
+                // Search within project/subproject
+                const transaction = db.transaction(['documents'], 'readonly');
+                const store = transaction.objectStore('documents');
+                const index = store.index('userId');
+                const request = index.getAll(currentUser.email);
+                
+                request.onsuccess = () => {
+                    let docs = request.result || [];
+                    const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+                    
+                    if (currentSubprojectId) {
+                        docs = docs.filter(d => d.subprojectId == currentSubprojectId);
+                    } else {
+                        docs = docs.filter(d => d.projectId == currentProjectId && !d.subprojectId);
+                    }
+                    
+                    if (searchQuery) {
+                        docs = docs.filter(doc => 
+                            doc.name.toLowerCase().includes(searchQuery) ||
+                            (doc.description && doc.description.toLowerCase().includes(searchQuery)) ||
+                            (doc.tags && doc.tags.some(t => t.toLowerCase().includes(searchQuery)))
+                        );
+                    }
+                    
+                    renderProjectDocuments(docs);
+                };
+            }
         }
 
         function clearSearch() {
             document.getElementById('searchInput').value = '';
             document.getElementById('clearSearchBtn').classList.add('hidden');
-            loadDocuments();
+            handleSearch();
         }
 
         function setViewMode(mode) {
@@ -1565,10 +1648,7 @@
             document.getElementById('uploadSettings').classList.add('hidden');
             document.getElementById('uploadSubmitBtn').disabled = true;
             
-            // Populate project select
             populateProjectSelect();
-            
-            // Show/hide subproject select based on project selection
             updateSubprojectSelect();
         }
 
@@ -1591,7 +1671,7 @@
             const select = document.getElementById('uploadSubproject');
             
             if (projectId) {
-                const subprojects = subprojectsCache.filter(sp => sp.parentId == projectId);
+                const subprojects = subprojectsCache.filter(sp => sp.parentId == projectId && sp.userId === currentUser.email);
                 if (subprojects.length > 0) {
                     container.classList.remove('hidden');
                     select.innerHTML = '<option value="">No Subproject</option>' +
@@ -1750,6 +1830,8 @@
         }
 
         function openProjectModal() {
+            // Only allow if user is logged in
+            if (!currentUser) return;
             document.getElementById('projectModal').classList.remove('hidden');
             document.getElementById('projectName').value = '';
             document.getElementById('projectDescription').value = '';
@@ -1775,6 +1857,8 @@
 
         async function handleCreateProject(e) {
             e.preventDefault();
+            if (!currentUser) return;
+            
             const project = {
                 userId: currentUser.email,
                 name: document.getElementById('projectName').value,
@@ -1799,7 +1883,7 @@
         }
 
         function openSubprojectModal() {
-            if (!currentProjectId) return;
+            if (!currentUser || !currentProjectId) return;
             document.getElementById('subprojectModal').classList.remove('hidden');
             document.getElementById('subprojectName').value = '';
             document.getElementById('subprojectDescription').value = '';
@@ -1826,6 +1910,8 @@
 
         async function handleCreateSubproject(e) {
             e.preventDefault();
+            if (!currentUser) return;
+            
             const subproject = {
                 userId: currentUser.email,
                 parentId: parseInt(document.getElementById('subprojectParentId').value),
@@ -1849,13 +1935,17 @@
         }
 
         async function viewDocument(id) {
+            // Check if document belongs to current user
             const transaction = db.transaction(['documents'], 'readonly');
             const store = transaction.objectStore('documents');
             const request = store.get(id);
             
             request.onsuccess = () => {
                 const doc = request.result;
-                if (!doc) return;
+                if (!doc || doc.userId !== currentUser.email) {
+                    alert('You do not have permission to view this document.');
+                    return;
+                }
                 
                 currentDoc = doc;
                 currentZoom = 1;
@@ -1879,6 +1969,9 @@
                 document.getElementById('sidebarTags').innerHTML = (doc.tags || []).map(tag => 
                     `<span class="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-sm">#${escapeHtml(tag)}</span>`
                 ).join('');
+
+                // Show uploader info
+                document.getElementById('sidebarUploader').textContent = doc.userId;
                 
                 document.getElementById('sidebarDate').textContent = new Date(doc.createdAt).toLocaleString();
                 document.getElementById('sidebarSize').textContent = formatSize(doc.fileSize);
@@ -1908,10 +2001,9 @@
             const floatingZoom = document.getElementById('floatingZoomControls');
             document.getElementById('zoomLevel').textContent = '100%';
             
-            // Enable mouse wheel zoom
             zoomWithMouse = true;
             
-            // PDF Viewer
+            // PDF Viewer with optimized rendering
             if (doc.fileType === 'application/pdf' || doc.fileName.toLowerCase().endsWith('.pdf')) {
                 floatingZoom.classList.remove('hidden');
                 container.innerHTML = '<div id="pdfViewer" class="pdf-loading"><div class="loader mx-auto mb-4"></div><p class="text-white">Loading PDF...</p></div>';
@@ -1925,23 +2017,38 @@
                     const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
                     pdfDoc = await loadingTask.promise;
                     
-                    container.innerHTML = '<div id="pdfViewer"></div>';
+                    container.innerHTML = '<div id="pdfViewer" class="zoomable-content"></div>';
                     const pdfViewer = document.getElementById('pdfViewer');
                     
-                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                    // Render first page immediately, then others
+                    const renderPage = async (pageNum) => {
                         const page = await pdfDoc.getPage(pageNum);
                         const canvas = document.createElement('canvas');
                         canvas.className = 'pdf-page';
+                        canvas.id = `page-${pageNum}`;
                         const viewport = page.getViewport({ scale: 1.5 });
                         canvas.height = viewport.height;
                         canvas.width = viewport.width;
                         await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                        return canvas;
+                    };
+                    
+                    // Render first page
+                    const firstPage = await renderPage(1);
+                    pdfViewer.innerHTML = '';
+                    pdfViewer.appendChild(firstPage);
+                    pdfPages.push(firstPage);
+                    
+                    // Render remaining pages in background
+                    for (let pageNum = 2; pageNum <= pdfDoc.numPages; pageNum++) {
+                        const canvas = await renderPage(pageNum);
                         pdfViewer.appendChild(canvas);
                         pdfPages.push(canvas);
                     }
                     
                     setupMouseWheelZoom();
                 } catch (error) {
+                    console.error('PDF error:', error);
                     container.innerHTML = `
                         <div class="text-center text-white p-8">
                             <i class="fas fa-file-pdf text-6xl text-red-500 mb-4"></i>
@@ -2040,17 +2147,19 @@
                         </div>`;
                 }
             }
-            // Image Viewer
+            // Image Viewer with smooth zoom
             else if (doc.fileType && doc.fileType.startsWith('image/')) {
                 floatingZoom.classList.remove('hidden');
                 container.innerHTML = `
                     <div class="relative overflow-auto max-w-full max-h-full" id="imageContainer">
                         <img src="${doc.fileData}" 
-                             style="transform: scale(${currentZoom}); transition: transform 0.2s; max-height: 85vh; max-width: 90%;" 
-                             class="object-contain rounded-lg shadow-2xl"
-                             id="viewerMedia">
+                             style="transform: scale(${currentZoom}); transition: transform 0.1s ease-out; max-height: 85vh; max-width: 90%; cursor: grab;" 
+                             class="object-contain rounded-lg shadow-2xl zoomable-content"
+                             id="viewerMedia"
+                             draggable="false">
                     </div>`;
                 setupMouseWheelZoom();
+                setupImagePan();
             }
             // Text Viewer
             else if (doc.fileType && (
@@ -2129,35 +2238,65 @@
             };
         }
 
+        function setupImagePan() {
+            const img = document.getElementById('viewerMedia');
+            const container = document.getElementById('imageContainer');
+            if (!img || !container) return;
+            
+            let isDragging = false;
+            let startX, startY, scrollLeft, scrollTop;
+            
+            img.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                img.style.cursor = 'grabbing';
+                startX = e.pageX - container.offsetLeft;
+                startY = e.pageY - container.offsetTop;
+                scrollLeft = container.scrollLeft;
+                scrollTop = container.scrollTop;
+            });
+            
+            img.addEventListener('mouseleave', () => {
+                isDragging = false;
+                img.style.cursor = 'grab';
+            });
+            
+            img.addEventListener('mouseup', () => {
+                isDragging = false;
+                img.style.cursor = 'grab';
+            });
+            
+            container.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const x = e.pageX - container.offsetLeft;
+                const y = e.pageY - container.offsetTop;
+                const walkX = (x - startX) * 2;
+                const walkY = (y - startY) * 2;
+                container.scrollLeft = scrollLeft - walkX;
+                container.scrollTop = scrollTop - walkY;
+            });
+        }
+
         async function adjustZoom(delta) {
-            currentZoom = Math.max(0.5, Math.min(3, currentZoom + delta));
+            const newZoom = Math.max(0.5, Math.min(3, currentZoom + delta));
+            if (newZoom === currentZoom) return;
+            
+            currentZoom = newZoom;
             document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
             
-            if (pdfDoc && pdfPages.length > 0) {
-                const container = document.getElementById('pdfViewer');
-                container.innerHTML = '<div class="pdf-loading text-white p-4">Rendering...</div>';
-                
-                for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-                    const page = await pdfDoc.getPage(pageNum);
-                    const canvas = document.createElement('canvas');
-                    canvas.className = 'pdf-page';
-                    const viewport = page.getViewport({ scale: 1.5 * currentZoom });
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-                    if (pageNum === 1) container.innerHTML = '';
-                    container.appendChild(canvas);
-                }
-            } else {
-                const media = document.getElementById('viewerMedia');
-                if (media) media.style.transform = `scale(${currentZoom})`;
+            const zoomableContent = document.querySelector('.zoomable-content');
+            if (zoomableContent) {
+                zoomableContent.style.transform = `scale(${currentZoom})`;
             }
         }
 
         function resetZoom() {
             currentZoom = 1;
             document.getElementById('zoomLevel').textContent = '100%';
-            adjustZoom(0);
+            const zoomableContent = document.querySelector('.zoomable-content');
+            if (zoomableContent) {
+                zoomableContent.style.transform = `scale(1)`;
+            }
         }
 
         function closeViewer() {
@@ -2165,7 +2304,6 @@
             document.getElementById('dashboardPage').classList.remove('hidden');
             document.getElementById('floatingZoomControls').classList.add('hidden');
             
-            // Remove wheel event listener
             const container = document.getElementById('viewerContainer');
             container.onwheel = null;
             
@@ -2186,8 +2324,20 @@
         }
 
         function showDeleteModal(id) {
-            deleteTargetId = id;
-            document.getElementById('deleteModal').classList.remove('hidden');
+            // Check ownership before showing delete modal
+            const transaction = db.transaction(['documents'], 'readonly');
+            const store = transaction.objectStore('documents');
+            const request = store.get(id);
+            
+            request.onsuccess = () => {
+                const doc = request.result;
+                if (doc && doc.userId === currentUser.email) {
+                    deleteTargetId = id;
+                    document.getElementById('deleteModal').classList.remove('hidden');
+                } else {
+                    alert('You do not have permission to delete this document.');
+                }
+            };
         }
 
         function closeDeleteModal() {
@@ -2197,26 +2347,42 @@
 
         async function confirmDelete() {
             if (!deleteTargetId) return;
-            await new Promise((resolve, reject) => {
-                const transaction = db.transaction(['documents'], 'readwrite');
-                const store = transaction.objectStore('documents');
-                const request = store.delete(deleteTargetId);
-                request.onsuccess = resolve;
-                request.onerror = () => reject(request.error);
-            });
-            closeDeleteModal();
             
-            // Refresh current view
-            if (currentProjectId) {
-                if (currentSubprojectId) {
-                    await loadProjectDocuments(null, currentSubprojectId);
-                } else {
-                    await loadProjectDocuments(currentProjectId);
+            // Double check ownership before deleting
+            const checkTransaction = db.transaction(['documents'], 'readonly');
+            const checkStore = checkTransaction.objectStore('documents');
+            const checkRequest = checkStore.get(deleteTargetId);
+            
+            checkRequest.onsuccess = async () => {
+                const doc = checkRequest.result;
+                if (!doc || doc.userId !== currentUser.email) {
+                    alert('You do not have permission to delete this document.');
+                    closeDeleteModal();
+                    return;
                 }
-            } else {
-                await loadDocuments();
-            }
-            updateStorageInfo();
+                
+                await new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['documents'], 'readwrite');
+                    const store = transaction.objectStore('documents');
+                    const request = store.delete(deleteTargetId);
+                    request.onsuccess = resolve;
+                    request.onerror = () => reject(request.error);
+                });
+                
+                closeDeleteModal();
+                
+                // Refresh current view
+                if (currentProjectId) {
+                    if (currentSubprojectId) {
+                        await loadProjectDocuments(null, currentSubprojectId);
+                    } else {
+                        await loadProjectDocuments(currentProjectId);
+                    }
+                } else {
+                    await loadDocuments();
+                }
+                updateStorageInfo();
+            };
         }
 
         function formatSize(bytes) {
