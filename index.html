@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Vault - Personal Document Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js for reliable PDF rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- SheetJS for Excel support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: 'var(--primary-50)',
+                            100: 'var(--primary-100)',
+                            200: 'var(--primary-200)',
+                            300: 'var(--primary-300)',
+                            400: 'var(--primary-400)',
+                            500: 'var(--primary-500)',
+                            600: 'var(--primary-600)',
+                            700: 'var(--primary-700)',
+                            800: 'var(--primary-800)',
+                            900: 'var(--primary-900)',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary-50: #eff6ff;
+            --primary-100: #dbeafe;
+            --primary-200: #bfdbfe;
+            --primary-300: #93c5fd;
+            --primary-400: #60a5fa;
+            --primary-500: #3b82f6;
+            --primary-600: #2563eb;
+            --primary-700: #1d4ed8;
+            --primary-800: #1e40af;
+            --primary-900: #1e3a8a;
+        }
+
+        [data-theme="purple"] {
+            --primary-50: #faf5ff;
+            --primary-100: #f3e8ff;
+            --primary-200: #e9d5ff;
+            --primary-300: #d8b4fe;
+            --primary-400: #c084fc;
+            --primary-500: #a855f7;
+            --primary-600: #9333ea;
+            --primary-700: #7c3aed;
+            --primary-800: #6b21a8;
+            --primary-900: #581c87;
+        }
+
+        [data-theme="green"] {
+            --primary-50: #f0fdf4;
+            --primary-100: #dcfce7;
+            --primary-200: #bbf7d0;
+            --primary-300: #86efac;
+            --primary-400: #4ade80;
+            --primary-500: #22c55e;
+            --primary-600: #16a34a;
+            --primary-700: #15803d;
+            --primary-800: #166534;
+            --primary-900: #14532d;
+        }
+
+        [data-theme="orange"] {
+            --primary-50: #fff7ed;
+            --primary-100: #ffedd5;
+            --primary-200: #fed7aa;
+            --primary-300: #fdba74;
+            --primary-400: #fb923c;
+            --primary-500: #f97316;
+            --primary-600: #ea580c;
+            --primary-700: #c2410c;
+            --primary-800: #9a3412;
+            --primary-900: #7c2d12;
+        }
+
+        [data-theme="pink"] {
+            --primary-50: #fdf2f8;
+            --primary-100: #fce7f3;
+            --primary-200: #fbcfe8;
+            --primary-300: #f9a8d4;
+            --primary-400: #f472b6;
+            --primary-500: #ec4899;
+            --primary-600: #db2777;
+            --primary-700: #be185d;
+            --primary-800: #9d174d;
+            --primary-900: #831843;
+        }
+
+        [data-theme="red"] {
+            --primary-50: #fef2f2;
+            --primary-100: #fee2e2;
+            --primary-200: #fecaca;
+            --primary-300: #fca5a5;
+            --primary-400: #f87171;
+            --primary-500: #ef4444;
+            --primary-600: #dc2626;
+            --primary-700: #b91c1c;
+            --primary-800: #991b1b;
+            --primary-900: #7f1d1d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .dark .glass-panel {
+            background: rgba(17, 24, 39, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .dark-glass {
+            background: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        
+        .file-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .file-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .dark .file-card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid var(--primary-600);
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .viewer-container {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        
+        .theme-transition {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        #pdfViewer {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .pdf-page {
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 20px;
+            max-width: 100%;
+        }
+        
+        .pdf-loading {
+            color: white;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .excel-viewer {
+            background: white;
+            border-radius: 8px;
+            overflow: auto;
+            max-width: 100%;
+            max-height: 70vh;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .excel-table {
+            border-collapse: collapse;
+            font-size: 13px;
+            font-family: 'Calibri', 'Arial', sans-serif;
+            width: 100%;
+        }
+        
+        .excel-table th {
+            background: #4472C4;
+            color: white;
+            border: 1px solid #2F5597;
+            padding: 8px 12px;
+            font-weight: 600;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+        
+        .excel-table td {
+            border: 1px solid #B4C7E7;
+            padding: 6px 12px;
+            white-space: nowrap;
+            background: white;
+        }
+        
+        .excel-table tr:nth-child(even) td {
+            background: #D9E2F3;
+        }
+        
+        .excel-table tr:hover td {
+            background: #F4B084 !important;
+        }
+
+        .excel-sheet-tabs {
+            display: flex;
+            background: #f3f4f6;
+            border-top: 1px solid #d1d5db;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .excel-sheet-tab {
+            padding: 6px 16px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-size: 12px;
+            color: #374151;
+        }
+
+        .excel-sheet-tab.active {
+            background: #4472C4;
+            color: white;
+            border-color: #2F5597;
+        }
+
+        .file-list-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .dark .file-list-item {
+            background: #374151;
+            border-color: #4b5563;
+        }
+
+        .file-list-item input[type="text"] {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 0;
+        }
+
+        .dark .file-list-item input[type="text"] {
+            background: #1f2937;
+            border-color: #4b5563;
+            color: white;
+        }
+
+        .remove-file-btn {
+            padding: 6px;
+            color: #ef4444;
+            cursor: pointer;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .remove-file-btn:hover {
+            background: #fee2e2;
+        }
+
+        /* Ensure proper display on mobile */
+        @media (max-width: 640px) {
+            .excel-table {
+                font-size: 11px;
+            }
+            .excel-table th, .excel-table td {
+                padding: 4px 8px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 theme-transition dark:bg-gray-900 dark:text-gray-100">
+
+    <!-- Login Page -->
+    <div id="loginPage" class="min-h-screen bg-gradient-to-br from-gray-900 via-primary-900 to-gray-900 flex items-center justify-center p-4">
+        <div class="w-full max-w-md animate-slide-up">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-tr from-primary-500 to-purple-600 shadow-2xl shadow-primary-500/50 mb-4">
+                    <i class="fas fa-folder-open text-3xl text-white"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">Project Vault</h1>
+                <p class="text-gray-400">Secure local document management</p>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-8 shadow-2xl">
+                <div class="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                    <button onclick="toggleAuthMode('login')" id="loginTab" class="flex-1 py-2 text-sm font-medium rounded-md transition-all bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm">
+                        Sign In
+                    </button>
+                    <button onclick="toggleAuthMode('register')" id="registerTab" class="flex-1 py-2 text-sm font-medium rounded-md transition-all text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200">
+                        Sign Up
+                    </button>
+                </div>
+
+                <div id="authError" class="hidden mb-4 p-3 rounded-lg text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"></div>
+                <div id="authSuccess" class="hidden mb-4 p-3 rounded-lg text-sm bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800"></div>
+
+                <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email Address</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="email" id="authEmail" required class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white" placeholder="you@example.com">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="password" id="authPassword" required minlength="6" class="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white" placeholder="••••••••">
+                            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <i id="passwordToggle" class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="authSubmitBtn" class="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all duration-200 shadow-lg shadow-primary-500/30 active:scale-95 flex items-center justify-center gap-2 mt-6">
+                        <i class="fas fa-sparkles"></i>
+                        <span id="authSubmitText">Sign In</span>
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <p>Data stored locally in your browser</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboardPage" class="hidden min-h-screen bg-gray-50 dark:bg-gray-900 theme-transition">
+        <!-- Header -->
+        <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 shadow-sm theme-transition">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3 cursor-pointer" onclick="showDashboard()">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary-500 to-purple-600 flex items-center justify-center shadow-lg">
+                            <i class="fas fa-folder text-white text-lg"></i>
+                        </div>
+                        <h1 class="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">Project Vault</h1>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Toggle Theme">
+                            <i id="themeIcon" class="fas fa-moon"></i>
+                        </button>
+
+                        <div class="relative group">
+                            <button class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Theme Color">
+                                <i class="fas fa-palette text-primary-600"></i>
+                            </button>
+                            <div class="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-3 hidden group-hover:block z-50">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">Theme Color</p>
+                                <div class="grid grid-cols-5 gap-2">
+                                    <button onclick="setThemeColor('blue')" class="w-8 h-8 rounded-full bg-blue-500 hover:ring-2 ring-offset-2 ring-blue-500 transition-all" title="Blue"></button>
+                                    <button onclick="setThemeColor('purple')" class="w-8 h-8 rounded-full bg-purple-500 hover:ring-2 ring-offset-2 ring-purple-500 transition-all" title="Purple"></button>
+                                    <button onclick="setThemeColor('green')" class="w-8 h-8 rounded-full bg-green-500 hover:ring-2 ring-offset-2 ring-green-500 transition-all" title="Green"></button>
+                                    <button onclick="setThemeColor('orange')" class="w-8 h-8 rounded-full bg-orange-500 hover:ring-2 ring-offset-2 ring-orange-500 transition-all" title="Orange"></button>
+                                    <button onclick="setThemeColor('pink')" class="w-8 h-8 rounded-full bg-pink-500 hover:ring-2 ring-offset-2 ring-pink-500 transition-all" title="Pink"></button>
+                                    <button onclick="setThemeColor('red')" class="w-8 h-8 rounded-full bg-red-500 hover:ring-2 ring-offset-2 ring-red-500 transition-all" title="Red"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
+                        
+                        <div class="hidden md:flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full">
+                            <i class="fas fa-hdd"></i>
+                            <span id="storageInfo">0 MB used</span>
+                        </div>
+                        
+                        <div class="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden md:block"></div>
+                        
+                        <span id="userEmail" class="text-sm text-gray-600 dark:text-gray-300 hidden md:block font-medium max-w-[150px] truncate"></span>
+                        
+                        <button onclick="logout()" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors" title="Sign Out">
+                            <i class="fas fa-sign-out-alt text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col md:flex-row gap-4 mb-8">
+                <div class="flex-1 relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search by name, description, or tags..." class="w-full pl-12 pr-10 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all shadow-sm text-lg dark:text-white dark:placeholder-gray-500">
+                    <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="openProjectModal()" class="px-5 py-2.5 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium rounded-xl border border-gray-200 dark:border-gray-700 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fas fa-plus"></i>
+                        <span class="hidden sm:inline">New Project</span>
+                    </button>
+                    <button onclick="openUploadModal()" class="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition-all shadow-lg shadow-primary-500/30 flex items-center gap-2 whitespace-nowrap">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span class="hidden sm:inline">Upload</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 mb-6" id="filterContainer">
+                <button onclick="filterByProject(null)" id="filter-all" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-all bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm">
+                    All Documents
+                </button>
+            </div>
+
+            <div class="flex items-center justify-between mb-6">
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    <span id="docCount">0</span> documents
+                </div>
+                <div class="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700 shadow-sm theme-transition">
+                    <button onclick="setViewMode('grid')" id="viewGrid" class="p-2 rounded-md transition-colors bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button onclick="setViewMode('list')" id="viewList" class="p-2 rounded-md transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="documentsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            </div>
+
+            <div id="emptyState" class="hidden text-center py-20">
+                <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
+                    <i class="fas fa-folder-open text-4xl text-gray-400 dark:text-gray-500"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No documents yet</h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">Upload your first document to get started.</p>
+                <button onclick="openUploadModal()" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all shadow-lg">
+                    Upload Document
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Viewer -->
+    <div id="viewerPage" class="hidden min-h-screen viewer-container flex flex-col">
+        <div class="bg-gray-800/90 border-b border-gray-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md">
+            <div class="flex items-center gap-4">
+                <button onclick="closeViewer()" class="p-2 hover:bg-gray-700 rounded-lg text-gray-300 hover:text-white transition-colors">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </button>
+                
+                <div class="min-w-0">
+                    <h1 id="viewerTitle" class="text-white font-semibold truncate max-w-xs sm:max-w-md md:max-w-lg"></h1>
+                    <p id="viewerMeta" class="text-gray-400 text-sm truncate"></p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <div id="zoomControls" class="hidden md:flex items-center gap-1 bg-gray-700 rounded-lg p-1 mr-2">
+                    <button onclick="adjustZoom(-0.1)" class="p-1.5 hover:bg-gray-600 rounded text-gray-300 transition-colors">
+                        <i class="fas fa-minus text-xs"></i>
+                    </button>
+                    <span id="zoomLevel" class="text-gray-300 text-sm w-12 text-center font-mono">100%</span>
+                    <button onclick="adjustZoom(0.1)" class="p-1.5 hover:bg-gray-600 rounded text-gray-300 transition-colors">
+                        <i class="fas fa-plus text-xs"></i>
+                    </button>
+                    <button onclick="resetZoom()" class="p-1.5 hover:bg-gray-600 rounded text-gray-300 transition-colors" title="Reset">
+                        <i class="fas fa-compress text-xs"></i>
+                    </button>
+                </div>
+                
+                <div class="h-6 w-px bg-gray-600 hidden sm:block"></div>
+                
+                <button onclick="downloadCurrentFile()" class="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors shadow-lg">
+                    <i class="fas fa-download"></i>
+                    <span class="hidden sm:inline">Download</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-auto flex items-start justify-center p-4 sm:p-8 relative bg-gray-900" id="viewerContainer">
+            <div id="viewerContent" class="w-full h-full flex items-start justify-center">
+            </div>
+            
+            <div class="hidden xl:block fixed right-0 top-16 bottom-0 w-80 dark-glass border-l border-gray-700 p-6 overflow-y-auto custom-scrollbar">
+                <h3 class="text-white font-semibold mb-6 flex items-center gap-2">
+                    <i class="fas fa-info-circle text-primary-400"></i>
+                    Document Details
+                </h3>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="text-gray-400 text-xs uppercase tracking-wider font-medium">Description</label>
+                        <p id="sidebarDescription" class="text-gray-200 mt-2 text-sm leading-relaxed"></p>
+                    </div>
+                    
+                    <div>
+                        <label class="text-gray-400 text-xs uppercase tracking-wider font-medium">Project</label>
+                        <p id="sidebarProject" class="text-gray-200 mt-2 text-sm flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+                            None
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <label class="text-gray-400 text-xs uppercase tracking-wider font-medium">Tags</label>
+                        <div id="sidebarTags" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+                    
+                    <div class="pt-4 border-t border-gray-700">
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <label class="text-gray-400 text-xs block mb-1">Uploaded</label>
+                                <p id="sidebarDate" class="text-gray-300"></p>
+                            </div>
+                            <div>
+                                <label class="text-gray-400 text-xs block mb-1">Size</label>
+                                <p id="sidebarSize" class="text-gray-300"></p>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="text-gray-400 text-xs block mb-1">Type</label>
+                                <p id="sidebarType" class="text-gray-300 truncate"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multiple Upload Modal -->
+    <div id="uploadModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl shadow-2xl animate-slide-up my-auto theme-transition max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-t-2xl flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                        <i class="fas fa-cloud-upload-alt text-primary-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Upload Documents</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400" id="uploadCountText">Select files to upload</p>
+                    </div>
+                </div>
+                <button onclick="closeUploadModal()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    <i class="fas fa-times text-gray-500 dark:text-gray-400"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6">
+                <div id="dropZone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all cursor-pointer relative bg-white dark:bg-gray-800 mb-4">
+                    <input type="file" id="fileInput" multiple required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileSelect(this)">
+                    <div id="dropZoneContent">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                        <p class="font-medium text-gray-900 dark:text-white mb-1">Drop files here or click to browse</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Select multiple files (PDF, Word, Excel, images, etc.)</p>
+                    </div>
+                </div>
+
+                <div id="selectedFilesList" class="space-y-2 mb-4 hidden">
+                    <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selected Files (<span id="fileCount">0</span>)</h3>
+                    <div id="filesContainer" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                    </div>
+                </div>
+
+                <div id="uploadSettings" class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4 hidden">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Project (Applied to all files)</label>
+                        <select id="uploadProject" class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white">
+                            <option value="">No Project</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                            Tags (Applied to all files) <span class="text-gray-400 font-normal">(press Enter to add)</span>
+                        </label>
+                        <div class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
+                            <div id="tagContainer" class="flex flex-wrap gap-2 mb-2"></div>
+                            <input type="text" id="tagInput" class="w-full outline-none text-sm bg-transparent dark:text-white" placeholder="Add tags..." onkeydown="handleTagInput(event)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeUploadModal()" class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="handleMultipleUpload()" id="uploadSubmitBtn" class="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <span>Upload All</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Modal -->
+    <div id="projectModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl animate-slide-up theme-transition">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-t-2xl">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">New Project</h2>
+                <button onclick="closeProjectModal()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    <i class="fas fa-times text-gray-500 dark:text-gray-400"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="handleCreateProject(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Project Name *</label>
+                    <input type="text" id="projectName" required class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all dark:text-white" placeholder="e.g., Website Redesign">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
+                    <textarea id="projectDescription" rows="3" class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all resize-none dark:text-white" placeholder="Project details..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Color</label>
+                    <div class="flex gap-3 flex-wrap">
+                        <button type="button" onclick="selectProjectColor('blue')" class="project-color-btn w-8 h-8 rounded-full bg-blue-500 ring-2 ring-offset-2 ring-blue-500 transition-all" data-color="blue"></button>
+                        <button type="button" onclick="selectProjectColor('green')" class="project-color-btn w-8 h-8 rounded-full bg-green-500 hover:ring-2 hover:ring-offset-2 hover:ring-green-500 transition-all" data-color="green"></button>
+                        <button type="button" onclick="selectProjectColor('purple')" class="project-color-btn w-8 h-8 rounded-full bg-purple-500 hover:ring-2 hover:ring-offset-2 hover:ring-purple-500 transition-all" data-color="purple"></button>
+                        <button type="button" onclick="selectProjectColor('red')" class="project-color-btn w-8 h-8 rounded-full bg-red-500 hover:ring-2 hover:ring-offset-2 hover:ring-red-500 transition-all" data-color="red"></button>
+                        <button type="button" onclick="selectProjectColor('yellow')" class="project-color-btn w-8 h-8 rounded-full bg-yellow-500 hover:ring-2 hover:ring-offset-2 hover:ring-yellow-500 transition-all" data-color="yellow"></button>
+                    </div>
+                    <input type="hidden" id="projectColor" value="blue">
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeProjectModal()" class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-all shadow-lg">
+                        Create Project
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm shadow-2xl animate-slide-up p-6 text-center theme-transition">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete Document?</h3>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone. The file will be permanently removed.</p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button onclick="confirmDelete()" class="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-all shadow-lg">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database Management
+        const DB_NAME = 'ProjectVaultDB';
+        const DB_VERSION = 4;
+        let db;
+        let currentUser = null;
+        let currentFilter = null;
+        let viewMode = 'grid';
+        let currentZoom = 1;
+        let currentDoc = null;
+        let deleteTargetId = null;
+        let uploadTags = [];
+        let projectsCache = [];
+        let pdfDoc = null;
+        let pdfPages = [];
+        let selectedFiles = [];
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+                    
+                    if (!database.objectStoreNames.contains('users')) {
+                        const userStore = database.createObjectStore('users', { keyPath: 'email' });
+                        userStore.createIndex('email', 'email', { unique: true });
+                    }
+                    
+                    if (!database.objectStoreNames.contains('documents')) {
+                        const docStore = database.createObjectStore('documents', { keyPath: 'id', autoIncrement: true });
+                        docStore.createIndex('userId', 'userId', { unique: false });
+                        docStore.createIndex('projectId', 'projectId', { unique: false });
+                        docStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
+                    } else {
+                        const transaction = event.target.transaction;
+                        const docStore = transaction.objectStore('documents');
+                        if (!docStore.indexNames.contains('projectId')) {
+                            docStore.createIndex('projectId', 'projectId', { unique: false });
+                        }
+                    }
+                    
+                    if (!database.objectStoreNames.contains('projects')) {
+                        const projStore = database.createObjectStore('projects', { keyPath: 'id', autoIncrement: true });
+                        projStore.createIndex('userId', 'userId', { unique: false });
+                    }
+
+                    if (!database.objectStoreNames.contains('settings')) {
+                        database.createObjectStore('settings', { keyPath: 'key' });
+                    }
+                };
+            });
+        }
+
+        async function loadTheme() {
+            if (!db) return;
+            const transaction = db.transaction(['settings'], 'readonly');
+            const store = transaction.objectStore('settings');
+            const request = store.get('theme');
+            
+            request.onsuccess = () => {
+                const settings = request.result;
+                if (settings) {
+                    if (settings.darkMode) {
+                        document.documentElement.classList.add('dark');
+                        document.getElementById('themeIcon').className = 'fas fa-sun';
+                    }
+                    if (settings.color) {
+                        document.documentElement.setAttribute('data-theme', settings.color);
+                    }
+                }
+            };
+        }
+
+        async function saveTheme(darkMode, color) {
+            if (!db || !currentUser) return;
+            const transaction = db.transaction(['settings'], 'readwrite');
+            const store = transaction.objectStore('settings');
+            store.put({ key: 'theme', darkMode, color, userId: currentUser.email });
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.getElementById('themeIcon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            saveTheme(isDark, document.documentElement.getAttribute('data-theme') || 'blue');
+        }
+
+        function setThemeColor(color) {
+            document.documentElement.setAttribute('data-theme', color);
+            saveTheme(document.documentElement.classList.contains('dark'), color);
+        }
+
+        function toggleAuthMode(mode) {
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const submitText = document.getElementById('authSubmitText');
+            
+            if (mode === 'login') {
+                loginTab.className = 'flex-1 py-2 text-sm font-medium rounded-md transition-all bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm';
+                registerTab.className = 'flex-1 py-2 text-sm font-medium rounded-md transition-all text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200';
+                submitText.textContent = 'Sign In';
+            } else {
+                registerTab.className = 'flex-1 py-2 text-sm font-medium rounded-md transition-all bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm';
+                loginTab.className = 'flex-1 py-2 text-sm font-medium rounded-md transition-all text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200';
+                submitText.textContent = 'Sign Up';
+            }
+            document.getElementById('authForm').dataset.mode = mode;
+            hideAuthMessages();
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('authPassword');
+            const icon = document.getElementById('passwordToggle');
+            input.type = input.type === 'password' ? 'text' : 'password';
+            icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+        }
+
+        function showAuthError(msg) {
+            document.getElementById('authError').textContent = msg;
+            document.getElementById('authError').classList.remove('hidden');
+            document.getElementById('authSuccess').classList.add('hidden');
+        }
+
+        function showAuthSuccess(msg) {
+            document.getElementById('authSuccess').textContent = msg;
+            document.getElementById('authSuccess').classList.remove('hidden');
+            document.getElementById('authError').classList.add('hidden');
+        }
+
+        function hideAuthMessages() {
+            document.getElementById('authError').classList.add('hidden');
+            document.getElementById('authSuccess').classList.add('hidden');
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const mode = e.target.dataset.mode || 'login';
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            
+            const transaction = db.transaction(['users'], 'readwrite');
+            const store = transaction.objectStore('users');
+            
+            if (mode === 'register') {
+                const checkReq = store.get(email);
+                checkReq.onsuccess = () => {
+                    if (checkReq.result) {
+                        showAuthError('Account already exists. Please sign in.');
+                    } else {
+                        store.add({ email, password, createdAt: new Date().toISOString() }).onsuccess = () => {
+                            showAuthSuccess('Account created! Please sign in.');
+                            setTimeout(() => toggleAuthMode('login'), 1500);
+                        };
+                    }
+                };
+            } else {
+                const request = store.get(email);
+                request.onsuccess = () => {
+                    const user = request.result;
+                    if (!user || user.password !== password) {
+                        showAuthError('Invalid email or password.');
+                    } else {
+                        currentUser = user;
+                        localStorage.setItem('currentUser', JSON.stringify(user));
+                        loadTheme();
+                        showDashboard();
+                    }
+                };
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            projectsCache = [];
+            localStorage.removeItem('currentUser');
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('dashboardPage').classList.add('hidden');
+            document.getElementById('viewerPage').classList.add('hidden');
+            document.getElementById('authEmail').value = '';
+            document.getElementById('authPassword').value = '';
+            toggleAuthMode('login');
+        }
+
+        async function showDashboard() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('dashboardPage').classList.remove('hidden');
+            document.getElementById('viewerPage').classList.add('hidden');
+            document.getElementById('userEmail').textContent = currentUser.email;
+            await loadProjects();
+            await loadDocuments();
+            updateStorageInfo();
+        }
+
+        async function loadProjects() {
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['projects'], 'readonly');
+                const store = transaction.objectStore('projects');
+                const index = store.index('userId');
+                const request = index.getAll(currentUser.email);
+                
+                request.onsuccess = () => {
+                    projectsCache = request.result || [];
+                    renderProjectFilters(projectsCache);
+                    populateProjectSelect(projectsCache);
+                    resolve(projectsCache);
+                };
+            });
+        }
+
+        function renderProjectFilters(projects) {
+            const container = document.getElementById('filterContainer');
+            let html = `
+                <button onclick="filterByProject(null)" id="filter-all" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-all ${!currentFilter ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'}">
+                    All Documents
+                </button>
+            `;
+            
+            html += projects.map(p => `
+                <button onclick="filterByProject(${p.id})" id="filter-${p.id}" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${currentFilter === p.id ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'}">
+                    <span class="w-2 h-2 rounded-full bg-${p.color}-500"></span>
+                    ${escapeHtml(p.name)}
+                </button>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+
+        function populateProjectSelect(projects) {
+            const select = document.getElementById('uploadProject');
+            select.innerHTML = '<option value="">No Project</option>' + 
+                projects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+        }
+
+        async function loadDocuments() {
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['documents'], 'readonly');
+                const store = transaction.objectStore('documents');
+                const index = store.index('userId');
+                const request = index.getAll(currentUser.email);
+                
+                request.onsuccess = () => {
+                    renderDocuments(request.result || []);
+                    resolve(request.result || []);
+                };
+            });
+        }
+
+        function renderDocuments(docs) {
+            const container = document.getElementById('documentsContainer');
+            const emptyState = document.getElementById('emptyState');
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filtered = docs.filter(doc => {
+                const matchesSearch = !searchQuery || 
+                    doc.name.toLowerCase().includes(searchQuery) ||
+                    (doc.description && doc.description.toLowerCase().includes(searchQuery)) ||
+                    (doc.tags && doc.tags.some(t => t.toLowerCase().includes(searchQuery)));
+                const matchesProject = !currentFilter || doc.projectId == currentFilter;
+                return matchesSearch && matchesProject;
+            });
+            
+            filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            document.getElementById('docCount').textContent = filtered.length;
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            
+            if (viewMode === 'grid') {
+                container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
+                container.innerHTML = filtered.map(doc => {
+                    const icon = getFileIcon(doc.fileType);
+                    const project = projectsCache.find(p => p.id == doc.projectId);
+                    return `
+                        <div class="file-card bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 relative group cursor-pointer theme-transition" onclick="viewDocument(${doc.id})">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center">
+                                    <i class="${icon} text-2xl text-primary-600"></i>
+                                </div>
+                                <button onclick="event.stopPropagation(); showDeleteModal(${doc.id})" class="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-600 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-1 truncate" title="${escapeHtml(doc.name)}">${escapeHtml(doc.name)}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 h-10">${escapeHtml(doc.description || 'No description')}</p>
+                            ${project ? `
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md flex items-center gap-1">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-${project.color}-500"></span>
+                                        ${escapeHtml(project.name)}
+                                    </span>
+                                </div>
+                            ` : ''}
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                ${(doc.tags || []).map(tag => `
+                                    <span class="px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded-full">#${escapeHtml(tag)}</span>
+                                `).join('')}
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                <span class="flex items-center gap-1"><i class="far fa-clock"></i>${formatDate(doc.createdAt)}</span>
+                                <span>${formatSize(doc.fileSize)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                container.className = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm theme-transition';
+                container.innerHTML = `
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                            <tr>
+                                <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">Name</th>
+                                <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3 hidden md:table-cell">Project</th>
+                                <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3 hidden sm:table-cell">Tags</th>
+                                <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">Size</th>
+                                <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3 hidden lg:table-cell">Date</th>
+                                <th class="px-6 py-3 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            ${filtered.map(doc => {
+                                const icon = getFileIcon(doc.fileType);
+                                const project = projectsCache.find(p => p.id == doc.projectId);
+                                return `
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group" onclick="viewDocument(${doc.id})">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <i class="${icon} text-primary-600 text-lg"></i>
+                                                <div>
+                                                    <p class="font-medium text-gray-900 dark:text-white">${escapeHtml(doc.name)}</p>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400 md:hidden">${escapeHtml(doc.description?.substring(0, 50) || '')}...</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 hidden md:table-cell">
+                                            ${project ? `<span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-${project.color}-500"></span>${escapeHtml(project.name)}</span>` : '-'}
+                                        </td>
+                                        <td class="px-6 py-4 hidden sm:table-cell">
+                                            <div class="flex gap-1 flex-wrap">
+                                                ${(doc.tags || []).slice(0, 2).map(tag => `<span class="px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded-full">${escapeHtml(tag)}</span>`).join('')}
+                                                ${doc.tags?.length > 2 ? `<span class="text-xs text-gray-400 dark:text-gray-500">+${doc.tags.length - 2}</span>` : ''}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">${formatSize(doc.fileSize)}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">${formatDate(doc.createdAt)}</td>
+                                        <td class="px-6 py-4">
+                                            <button onclick="event.stopPropagation(); showDeleteModal(${doc.id})" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-600 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+        }
+
+        function getFileIcon(type) {
+            if (!type) return 'fas fa-file text-gray-400';
+            if (type.includes('pdf')) return 'fas fa-file-pdf text-red-500';
+            if (type.includes('image')) return 'fas fa-file-image text-purple-500';
+            if (type.includes('word') || type.includes('officedocument.word')) return 'fas fa-file-word text-blue-500';
+            if (type.includes('excel') || type.includes('sheet') || type.includes('csv')) return 'fas fa-file-excel text-green-500';
+            if (type.includes('powerpoint') || type.includes('presentation')) return 'fas fa-file-powerpoint text-orange-500';
+            if (type.includes('text') || type.includes('plain')) return 'fas fa-file-alt text-gray-500';
+            if (type.includes('video')) return 'fas fa-file-video text-red-400';
+            if (type.includes('audio')) return 'fas fa-file-audio text-yellow-500';
+            if (type.includes('zip') || type.includes('compressed')) return 'fas fa-file-archive text-yellow-600';
+            return 'fas fa-file text-gray-400';
+        }
+
+        function handleSearch() {
+            document.getElementById('clearSearchBtn').classList.toggle('hidden', !document.getElementById('searchInput').value);
+            loadDocuments();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            loadDocuments();
+        }
+
+        function filterByProject(projectId) {
+            currentFilter = projectId;
+            loadProjects().then(() => loadDocuments());
+        }
+
+        function setViewMode(mode) {
+            viewMode = mode;
+            document.getElementById('viewGrid').className = `p-2 rounded-md transition-colors ${mode === 'grid' ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`;
+            document.getElementById('viewList').className = `p-2 rounded-md transition-colors ${mode === 'list' ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`;
+            loadDocuments();
+        }
+
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.remove('hidden');
+            selectedFiles = [];
+            uploadTags = [];
+            renderTags();
+            document.getElementById('fileInput').value = '';
+            document.getElementById('uploadProject').value = '';
+            updateFileList();
+            document.getElementById('uploadSettings').classList.add('hidden');
+            document.getElementById('uploadSubmitBtn').disabled = true;
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            selectedFiles = [];
+        }
+
+        function handleFileSelect(input) {
+            const files = Array.from(input.files);
+            if (files.length > 0) {
+                files.forEach(file => {
+                    selectedFiles.push({
+                        file: file,
+                        name: file.name.replace(/\.[^/.]+$/, ''),
+                        description: ''
+                    });
+                });
+                updateFileList();
+            }
+        }
+
+        function updateFileList() {
+            const container = document.getElementById('filesContainer');
+            const listDiv = document.getElementById('selectedFilesList');
+            const settingsDiv = document.getElementById('uploadSettings');
+            const uploadBtn = document.getElementById('uploadSubmitBtn');
+            
+            document.getElementById('fileCount').textContent = selectedFiles.length;
+            document.getElementById('uploadCountText').textContent = `${selectedFiles.length} file(s) selected`;
+            
+            if (selectedFiles.length === 0) {
+                listDiv.classList.add('hidden');
+                settingsDiv.classList.add('hidden');
+                uploadBtn.disabled = true;
+                return;
+            }
+            
+            listDiv.classList.remove('hidden');
+            settingsDiv.classList.remove('hidden');
+            uploadBtn.disabled = false;
+            
+            container.innerHTML = selectedFiles.map((item, index) => `
+                <div class="file-list-item">
+                    <i class="${getFileIcon(item.file.type)} text-xl flex-shrink-0"></i>
+                    <div class="flex-1 min-w-0">
+                        <input type="text" value="${escapeHtml(item.name)}" onchange="updateFileName(${index}, this.value)" placeholder="File name" class="w-full mb-1">
+                        <input type="text" value="${escapeHtml(item.description)}" onchange="updateFileDescription(${index}, this.value)" placeholder="Description (optional)" class="w-full text-sm text-gray-600 dark:text-gray-400">
+                    </div>
+                    <span class="text-xs text-gray-500 flex-shrink-0">${formatSize(item.file.size)}</span>
+                    <button onclick="removeFile(${index})" class="remove-file-btn flex-shrink-0"><i class="fas fa-times"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function updateFileName(index, value) { selectedFiles[index].name = value; }
+        function updateFileDescription(index, value) { selectedFiles[index].description = value; }
+        function removeFile(index) { selectedFiles.splice(index, 1); updateFileList(); }
+
+        function handleTagInput(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const value = e.target.value.trim();
+                if (value && !uploadTags.includes(value)) {
+                    uploadTags.push(value);
+                    renderTags();
+                    e.target.value = '';
+                }
+            } else if (e.key === 'Backspace' && !e.target.value && uploadTags.length > 0) {
+                uploadTags.pop();
+                renderTags();
+            }
+        }
+
+        function renderTags() {
+            document.getElementById('tagContainer').innerHTML = uploadTags.map((tag, i) => `
+                <span class="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded-md flex items-center gap-1">
+                    ${escapeHtml(tag)}
+                    <button onclick="removeTag(${i})" class="hover:text-primary-900 dark:hover:text-primary-300"><i class="fas fa-times"></i></button>
+                </span>
+            `).join('');
+        }
+
+        function removeTag(index) { uploadTags.splice(index, 1); renderTags(); }
+
+        async function handleMultipleUpload() {
+            if (selectedFiles.length === 0) return;
+            
+            const btn = document.getElementById('uploadSubmitBtn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<div class="loader"></div> Uploading...';
+            btn.disabled = true;
+            
+            const projectId = document.getElementById('uploadProject').value ? parseInt(document.getElementById('uploadProject').value) : null;
+            
+            try {
+                for (const item of selectedFiles) {
+                    const base64 = await readFileAsBase64(item.file);
+                    const doc = {
+                        userId: currentUser.email,
+                        name: item.name || item.file.name,
+                        description: item.description,
+                        fileData: base64,
+                        fileType: item.file.type,
+                        fileName: item.file.name,
+                        fileSize: item.file.size,
+                        projectId: projectId,
+                        tags: uploadTags,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    await new Promise((resolve, reject) => {
+                        const transaction = db.transaction(['documents'], 'readwrite');
+                        const store = transaction.objectStore('documents');
+                        const request = store.add(doc);
+                        request.onsuccess = resolve;
+                        request.onerror = () => reject(request.error);
+                    });
+                }
+                
+                closeUploadModal();
+                await loadDocuments();
+                updateStorageInfo();
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Upload failed. Please try again.');
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function openProjectModal() {
+            document.getElementById('projectModal').classList.remove('hidden');
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDescription').value = '';
+            selectProjectColor('blue');
+        }
+
+        function closeProjectModal() {
+            document.getElementById('projectModal').classList.add('hidden');
+        }
+
+        function selectProjectColor(color) {
+            document.getElementById('projectColor').value = color;
+            document.querySelectorAll('.project-color-btn').forEach(btn => {
+                if (btn.dataset.color === color) {
+                    btn.classList.add('ring-2', 'ring-offset-2');
+                    btn.classList.remove('hover:ring-2', 'hover:ring-offset-2');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-offset-2');
+                    btn.classList.add('hover:ring-2', 'hover:ring-offset-2');
+                }
+            });
+        }
+
+        async function handleCreateProject(e) {
+            e.preventDefault();
+            const project = {
+                userId: currentUser.email,
+                name: document.getElementById('projectName').value,
+                description: document.getElementById('projectDescription').value,
+                color: document.getElementById('projectColor').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            await new Promise((resolve, reject) => {
+                const transaction = db.transaction(['projects'], 'readwrite');
+                const store = transaction.objectStore('projects');
+                const request = store.add(project);
+                request.onsuccess = resolve;
+                request.onerror = () => reject(request.error);
+            });
+            
+            closeProjectModal();
+            await loadProjects();
+        }
+
+        async function viewDocument(id) {
+            const transaction = db.transaction(['documents'], 'readonly');
+            const store = transaction.objectStore('documents');
+            const request = store.get(id);
+            
+            request.onsuccess = () => {
+                const doc = request.result;
+                if (!doc) return;
+                
+                currentDoc = doc;
+                currentZoom = 1;
+                pdfDoc = null;
+                pdfPages = [];
+                
+                document.getElementById('dashboardPage').classList.add('hidden');
+                document.getElementById('viewerPage').classList.remove('hidden');
+                
+                document.getElementById('viewerTitle').textContent = doc.name;
+                document.getElementById('viewerMeta').textContent = `${formatSize(doc.fileSize)} • ${doc.fileName}`;
+                document.getElementById('sidebarDescription').textContent = doc.description || 'No description';
+                
+                const project = projectsCache.find(p => p.id == doc.projectId);
+                document.getElementById('sidebarProject').innerHTML = project 
+                    ? `<span class="w-2 h-2 rounded-full bg-${project.color}-500"></span>${escapeHtml(project.name)}`
+                    : `<span class="w-2 h-2 rounded-full bg-gray-500"></span>None`;
+                
+                document.getElementById('sidebarTags').innerHTML = (doc.tags || []).map(tag => 
+                    `<span class="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-sm">#${escapeHtml(tag)}</span>`
+                ).join('');
+                
+                document.getElementById('sidebarDate').textContent = new Date(doc.createdAt).toLocaleString();
+                document.getElementById('sidebarSize').textContent = formatSize(doc.fileSize);
+                document.getElementById('sidebarType').textContent = doc.fileType || 'Unknown';
+                
+                renderViewerContent(doc);
+            };
+        }
+
+        async function renderViewerContent(doc) {
+            const container = document.getElementById('viewerContent');
+            const zoomControls = document.getElementById('zoomControls');
+            document.getElementById('zoomLevel').textContent = '100%';
+            
+            // PDF Viewer
+            if (doc.fileType === 'application/pdf' || doc.fileName.toLowerCase().endsWith('.pdf')) {
+                zoomControls.classList.remove('hidden');
+                container.innerHTML = '<div id="pdfViewer" class="pdf-loading"><div class="loader mx-auto mb-4"></div><p class="text-white">Loading PDF...</p></div>';
+                
+                try {
+                    const base64Data = doc.fileData.split(',')[1];
+                    const raw = window.atob(base64Data);
+                    const uint8Array = new Uint8Array(raw.length);
+                    for (let i = 0; i < raw.length; i++) uint8Array[i] = raw.charCodeAt(i);
+                    
+                    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+                    pdfDoc = await loadingTask.promise;
+                    
+                    container.innerHTML = '<div id="pdfViewer"></div>';
+                    const pdfViewer = document.getElementById('pdfViewer');
+                    
+                    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                        const page = await pdfDoc.getPage(pageNum);
+                        const canvas = document.createElement('canvas');
+                        canvas.className = 'pdf-page';
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                        pdfViewer.appendChild(canvas);
+                        pdfPages.push(canvas);
+                    }
+                } catch (error) {
+                    container.innerHTML = `
+                        <div class="text-center text-white p-8">
+                            <i class="fas fa-file-pdf text-6xl text-red-500 mb-4"></i>
+                            <p class="text-xl mb-4">Unable to load PDF preview</p>
+                            <button onclick="downloadCurrentFile()" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
+                                <i class="fas fa-download mr-2"></i> Download PDF
+                            </button>
+                        </div>`;
+                }
+            }
+            // Excel/Spreadsheet Viewer with SheetJS
+            else if (doc.fileType && (
+                doc.fileType.includes('excel') || 
+                doc.fileType.includes('spreadsheet') ||
+                doc.fileType.includes('csv') ||
+                doc.fileType.includes('sheet') ||
+                doc.fileName.toLowerCase().endsWith('.xlsx') ||
+                doc.fileName.toLowerCase().endsWith('.xls') ||
+                doc.fileName.toLowerCase().endsWith('.csv')
+            )) {
+                zoomControls.classList.add('hidden');
+                container.innerHTML = '<div class="text-center text-white p-8"><div class="loader mx-auto mb-4"></div><p>Loading Excel file...</p></div>';
+                
+                try {
+                    const base64Data = doc.fileData.split(',')[1];
+                    const raw = window.atob(base64Data);
+                    const uint8Array = new Uint8Array(raw.length);
+                    for (let i = 0; i < raw.length; i++) uint8Array[i] = raw.charCodeAt(i);
+                    
+                    const workbook = XLSX.read(uint8Array, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    const displayData = jsonData.slice(0, 100);
+                    const hasMore = jsonData.length > 100;
+                    
+                    // Calculate column widths
+                    const maxCols = Math.max(...displayData.map(row => row.length), 0);
+                    
+                    let tableHtml = `
+                        <div class="flex flex-col items-center w-full max-w-5xl">
+                            <div class="text-center text-white mb-4">
+                                <i class="fas fa-file-excel text-5xl text-green-500 mb-3"></i>
+                                <h2 class="text-xl font-bold">${escapeHtml(doc.fileName)}</h2>
+                                <p class="text-gray-400 text-sm">${workbook.SheetNames.length} sheet(s) • ${jsonData.length} rows</p>
+                            </div>
+                            
+                            <div class="excel-viewer w-full bg-white rounded-lg overflow-hidden">
+                                <div class="overflow-auto max-h-[60vh]">
+                                    <table class="excel-table">
+                                        <thead>
+                                            <tr>
+                                                ${displayData[0] ? displayData[0].map((cell, i) => 
+                                                    `<th>${cell !== undefined ? escapeHtml(String(cell)) : ''}</th>`
+                                                ).join('') : '<th>No Data</th>'}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${displayData.slice(1).map(row => `
+                                                <tr>
+                                                    ${Array.from({length: maxCols}, (_, i) => 
+                                                        `<td>${row[i] !== undefined ? escapeHtml(String(row[i])) : ''}</td>`
+                                                    ).join('')}
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                    ${hasMore ? `<div class="p-4 text-center text-gray-600 bg-gray-50 border-t">... and ${jsonData.length - 100} more rows</div>` : ''}
+                                </div>
+                                ${workbook.SheetNames.length > 1 ? `
+                                    <div class="excel-sheet-tabs">
+                                        ${workbook.SheetNames.map((name, idx) => 
+                                            `<div class="excel-sheet-tab ${idx === 0 ? 'active' : ''}">${escapeHtml(name)}</div>`
+                                        ).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <button onclick="downloadCurrentFile()" class="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-lg flex items-center gap-2">
+                                <i class="fas fa-download"></i>
+                                Download Excel File
+                            </button>
+                        </div>`;
+                    
+                    container.innerHTML = tableHtml;
+                } catch (error) {
+                    console.error('Excel loading error:', error);
+                    container.innerHTML = `
+                        <div class="text-center text-white p-8">
+                            <i class="fas fa-file-excel text-6xl text-green-500 mb-4"></i>
+                            <p class="text-xl mb-2">Excel Preview</p>
+                            <p class="text-gray-400 mb-4">Unable to parse file format</p>
+                            <button onclick="downloadCurrentFile()" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                                <i class="fas fa-download mr-2"></i> Download Excel File
+                            </button>
+                        </div>`;
+                }
+            }
+            // Image Viewer
+            else if (doc.fileType && doc.fileType.startsWith('image/')) {
+                zoomControls.classList.remove('hidden');
+                container.innerHTML = `
+                    <img src="${doc.fileData}" 
+                         style="transform: scale(${currentZoom}); transition: transform 0.2s; max-height: 85vh; max-width: 90%;" 
+                         class="object-contain rounded-lg shadow-2xl"
+                         id="viewerMedia">`;
+            }
+            // Text Viewer
+            else if (doc.fileType && (
+                doc.fileType.includes('text/') || 
+                doc.fileType.includes('application/json') ||
+                doc.fileType.includes('javascript') ||
+                doc.fileName.endsWith('.txt') ||
+                doc.fileName.endsWith('.json') ||
+                doc.fileName.endsWith('.js') ||
+                doc.fileName.endsWith('.css') ||
+                doc.fileName.endsWith('.html')
+            )) {
+                zoomControls.classList.add('hidden');
+                try {
+                    const base64Content = doc.fileData.split(',')[1];
+                    const textContent = atob(base64Content);
+                    container.innerHTML = `
+                        <div class="w-full max-w-4xl bg-gray-800 rounded-lg shadow-2xl overflow-hidden" style="max-height: 85vh;">
+                            <div class="bg-gray-900 px-4 py-2 text-xs text-gray-400 border-b border-gray-700 flex items-center gap-2">
+                                <i class="fas fa-file-code"></i>
+                                <span>${escapeHtml(doc.fileName)}</span>
+                            </div>
+                            <pre class="p-6 text-gray-300 font-mono text-sm whitespace-pre-wrap overflow-auto custom-scrollbar" style="max-height: calc(85vh - 40px);">${escapeHtml(textContent)}</pre>
+                        </div>`;
+                } catch (e) {
+                    container.innerHTML = `
+                        <div class="text-center text-white">
+                            <i class="fas fa-file-alt text-6xl text-gray-600 mb-4"></i>
+                            <p class="text-xl mb-4">Text preview not available</p>
+                            <button onclick="downloadCurrentFile()" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg">Download File</button>
+                        </div>`;
+                }
+            }
+            // Word/Documents
+            else if (doc.fileType && (doc.fileType.includes('word') || doc.fileType.includes('officedocument'))) {
+                zoomControls.classList.add('hidden');
+                container.innerHTML = `
+                    <div class="text-center text-white p-8">
+                        <i class="fas fa-file-word text-6xl text-blue-500 mb-6"></i>
+                        <h2 class="text-2xl font-bold mb-2">${escapeHtml(doc.fileName)}</h2>
+                        <p class="text-gray-400 mb-6">Microsoft Word Document</p>
+                        <button onclick="downloadCurrentFile()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-lg flex items-center gap-2">
+                            <i class="fas fa-download"></i>
+                            Download Word Document
+                        </button>
+                    </div>`;
+            }
+            // Default
+            else {
+                zoomControls.classList.add('hidden');
+                container.innerHTML = `
+                    <div class="text-center text-white p-8">
+                        <i class="fas fa-file text-6xl text-gray-600 mb-4"></i>
+                        <h2 class="text-2xl font-bold mb-2">${escapeHtml(doc.fileName)}</h2>
+                        <p class="text-gray-400 mb-2">Preview not available for this file type</p>
+                        <p class="text-sm text-gray-500 mb-6">${doc.fileType || 'Unknown type'}</p>
+                        <button onclick="downloadCurrentFile()" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors shadow-lg flex items-center gap-2">
+                            <i class="fas fa-download mr-2"></i> Download to View
+                        </button>
+                    </div>`;
+            }
+        }
+
+        async function adjustZoom(delta) {
+            currentZoom = Math.max(0.5, Math.min(3, currentZoom + delta));
+            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+            
+            if (pdfDoc && pdfPages.length > 0) {
+                const container = document.getElementById('pdfViewer');
+                container.innerHTML = '<div class="pdf-loading text-white p-4">Rendering...</div>';
+                
+                for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                    const page = await pdfDoc.getPage(pageNum);
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'pdf-page';
+                    const viewport = page.getViewport({ scale: 1.5 * currentZoom });
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                    if (pageNum === 1) container.innerHTML = '';
+                    container.appendChild(canvas);
+                }
+            } else {
+                const media = document.getElementById('viewerMedia');
+                if (media) media.style.transform = `scale(${currentZoom})`;
+            }
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            document.getElementById('zoomLevel').textContent = '100%';
+            adjustZoom(0);
+        }
+
+        function closeViewer() {
+            document.getElementById('viewerPage').classList.add('hidden');
+            document.getElementById('dashboardPage').classList.remove('hidden');
+            currentDoc = null;
+            pdfDoc = null;
+            pdfPages = [];
+        }
+
+        function downloadCurrentFile() {
+            if (!currentDoc) return;
+            const link = document.createElement('a');
+            link.href = currentDoc.fileData;
+            link.download = currentDoc.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showDeleteModal(id) {
+            deleteTargetId = id;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            deleteTargetId = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        async function confirmDelete() {
+            if (!deleteTargetId) return;
+            await new Promise((resolve, reject) => {
+                const transaction = db.transaction(['documents'], 'readwrite');
+                const store = transaction.objectStore('documents');
+                const request = store.delete(deleteTargetId);
+                request.onsuccess = resolve;
+                request.onerror = () => reject(request.error);
+            });
+            closeDeleteModal();
+            await loadDocuments();
+            updateStorageInfo();
+        }
+
+        function formatSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            if (diff < 86400000) {
+                if (diff < 3600000) return Math.floor(diff / 60000) < 1 ? 'Just now' : `${Math.floor(diff / 60000)}m ago`;
+                return `${Math.floor(diff / 3600000)}h ago`;
+            }
+            if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function updateStorageInfo() {
+            const transaction = db.transaction(['documents'], 'readonly');
+            const store = transaction.objectStore('documents');
+            const index = store.index('userId');
+            const request = index.getAll(currentUser.email);
+            request.onsuccess = () => {
+                const docs = request.result || [];
+                const totalSize = docs.reduce((sum, doc) => sum + (doc.fileSize || 0), 0);
+                document.getElementById('storageInfo').textContent = formatSize(totalSize) + ' used';
+            };
+        }
+
+        // Drag and drop
+        const dropZone = document.getElementById('dropZone');
+        if (dropZone) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.add('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.remove('border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+                }, false);
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length) {
+                    Array.from(files).forEach(file => {
+                        selectedFiles.push({ file, name: file.name.replace(/\.[^/.]+$/, ''), description: '' });
+                    });
+                    updateFileList();
+                }
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!document.getElementById('viewerPage').classList.contains('hidden')) closeViewer();
+                else if (!document.getElementById('uploadModal').classList.contains('hidden')) closeUploadModal();
+                else if (!document.getElementById('projectModal').classList.contains('hidden')) closeProjectModal();
+                else if (!document.getElementById('deleteModal').classList.contains('hidden')) closeDeleteModal();
+            }
+            if ((e.ctrlKey || e.metaKey) && !document.getElementById('dashboardPage').classList.contains('hidden')) {
+                if (e.key === 'u') { e.preventDefault(); openUploadModal(); }
+                if (e.key === 'k') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+            }
+        });
+
+        // Initialize
+        window.addEventListener('load', async () => {
+            try {
+                await initDB();
+                await loadTheme();
+                const savedUser = localStorage.getItem('currentUser');
+                if (savedUser) {
+                    currentUser = JSON.parse(savedUser);
+                    showDashboard();
+                }
+            } catch (error) {
+                console.error('Failed to initialize:', error);
+                alert('Failed to initialize application.');
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && currentUser) {
+                loadDocuments();
+                updateStorageInfo();
+            }
+        });
+    </script>
+</body>
+</html>
