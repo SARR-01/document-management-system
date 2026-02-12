@@ -3,267 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Vault · Secure Document Manager</title>
-    <!-- Tailwind (lightweight utility framework) -->
+    <title>Project Vault · Cloud Document Manager</title>
+    <!-- Tailwind + Inter -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome 6 (icons) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- PDF.js – render PDFs inside browser -->
+    <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <!-- SheetJS – read Excel / CSV files -->
+    <!-- SheetJS (Excel) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Mammoth.js – convert Word .docx to HTML -->
+    <!-- Mammoth.js (Word) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
-    <script>
-        // Configure PDF.js worker (required for the library to work)
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    </script>
     <style>
-        /* ----- Google Font Inter ----- */
+        /* ---------- GLOBAL STYLES (with smooth UI) ---------- */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        /* ----- THEME COLORS (dynamic) ----- */
         :root {
-            --primary-50: #eff6ff;   --primary-100: #dbeafe; --primary-200: #bfdbfe;
-            --primary-300: #93c5fd;  --primary-400: #60a5fa; --primary-500: #3b82f6;
-            --primary-600: #2563eb;  --primary-700: #1d4ed8; --primary-800: #1e40af; --primary-900: #1e3a8a;
+            --primary-50: #eff6ff; --primary-100: #dbeafe; --primary-200: #bfdbfe;
+            --primary-300: #93c5fd; --primary-400: #60a5fa; --primary-500: #3b82f6;
+            --primary-600: #2563eb; --primary-700: #1d4ed8; --primary-800: #1e40af; --primary-900: #1e3a8a;
         }
-        /* Alternate color schemes – applied via data-theme attribute */
+        /* Theme colors */
         [data-theme="purple"] { --primary-50: #faf5ff; --primary-100: #f3e8ff; --primary-200: #e9d5ff; --primary-300: #d8b4fe; --primary-400: #c084fc; --primary-500: #a855f7; --primary-600: #9333ea; --primary-700: #7c3aed; --primary-800: #6b21a8; --primary-900: #581c87; }
         [data-theme="green"]  { --primary-50: #f0fdf4; --primary-100: #dcfce7; --primary-200: #bbf7d0; --primary-300: #86efac; --primary-400: #4ade80; --primary-500: #22c55e; --primary-600: #16a34a; --primary-700: #15803d; --primary-800: #166534; --primary-900: #14532d; }
         [data-theme="orange"] { --primary-50: #fff7ed; --primary-100: #ffedd5; --primary-200: #fed7aa; --primary-300: #fdba74; --primary-400: #fb923c; --primary-500: #f97316; --primary-600: #ea580c; --primary-700: #c2410c; --primary-800: #9a3412; --primary-900: #7c2d12; }
         [data-theme="pink"]   { --primary-50: #fdf2f8; --primary-100: #fce7f3; --primary-200: #fbcfe8; --primary-300: #f9a8d4; --primary-400: #f472b6; --primary-500: #ec4899; --primary-600: #db2777; --primary-700: #be185d; --primary-800: #9d174d; --primary-900: #831843; }
         [data-theme="red"]    { --primary-50: #fef2f2; --primary-100: #fee2e2; --primary-200: #fecaca; --primary-300: #fca5a5; --primary-400: #f87171; --primary-500: #ef4444; --primary-600: #dc2626; --primary-700: #b91c1c; --primary-800: #991b1b; --primary-900: #7f1d1d; }
 
-        /* ----- GLOBAL RESET ----- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
-            background-color: #f9fafb;
-            color: #111827;
-            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-        }
-        .dark body {
-            background-color: #111827;
-            color: #f3f4f6;
-        }
-
-        /* ----- UTILITIES ----- */
-        .glass-panel {
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        .dark .glass-panel {
-            background: rgba(17,24,39,0.85);
-            border-color: rgba(255,255,255,0.1);
-        }
-        .dark-glass {
-            background: rgba(17,24,39,0.9);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        /* ----- CUSTOM SCROLLBAR ----- */
+        body { font-family: 'Inter', sans-serif; overflow-x: hidden; transition: background-color 0.3s, color 0.3s; }
+        .glass-panel { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); }
+        .dark .glass-panel { background: rgba(17,24,39,0.85); border-color: rgba(255,255,255,0.1); }
+        .dark-glass { background: rgba(17,24,39,0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
 
-        /* ----- FILE / FOLDER CARDS ----- */
-        .file-card, .folder-card {
-            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        .file-card, .folder-card, .main-project, .subproject-item, .zoom-btn, .back-to-projects-btn {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .file-card:hover, .folder-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-        }
-        .dark .file-card:hover, .dark .folder-card:hover {
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.3);
-        }
+        .file-card:active, .folder-card:active, .main-project:active { transform: scale(0.98); }
+        .file-card:hover, .folder-card:hover, .main-project:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); }
+        .dark .file-card:hover, .dark .folder-card:hover { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
 
-        /* ----- LOADER ----- */
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid var(--primary-600);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-600); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* ----- PDF VIEWER ----- */
-        #pdfViewer {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            padding: 20px;
-        }
-        .pdf-page {
-            background: white;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            max-width: 100%;
-            transition: opacity 0.2s;
-        }
+        #pdfViewer { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px; }
+        .pdf-page { background: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; max-width: 100%; }
 
-        /* ----- EXCEL TABLE ----- */
-        .excel-viewer {
-            background: white;
-            border-radius: 8px;
-            overflow: auto;
-            max-width: 100%;
-            max-height: 70vh;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-        }
-        .excel-table {
-            border-collapse: collapse;
-            font-size: 13px;
-            font-family: Calibri, Arial, sans-serif;
-            width: 100%;
-        }
-        .excel-table th {
-            background: #4472C4;
-            color: white;
-            border: 1px solid #2F5597;
-            padding: 8px 12px;
-            position: sticky;
-            top: 0;
-            white-space: nowrap;
-        }
-        .excel-table td {
-            border: 1px solid #B4C7E7;
-            padding: 6px 12px;
-            white-space: nowrap;
-            background: white;
-        }
+        .excel-viewer { background: white; border-radius: 8px; overflow: auto; max-width: 100%; max-height: 70vh; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .excel-table { border-collapse: collapse; font-size: 13px; font-family: Calibri, Arial, sans-serif; width: 100%; }
+        .excel-table th { background: #4472C4; color: white; border: 1px solid #2F5597; padding: 8px 12px; position: sticky; top: 0; white-space: nowrap; }
+        .excel-table td { border: 1px solid #B4C7E7; padding: 6px 12px; white-space: nowrap; background: white; }
         .excel-table tr:nth-child(even) td { background: #D9E2F3; }
         .excel-table tr:hover td { background: #F4B084 !important; }
-        .excel-sheet-tabs {
-            display: flex;
-            background: #f3f4f6;
-            border-top: 1px solid #d1d5db;
-            padding: 4px;
-            gap: 4px;
-        }
-        .excel-sheet-tab {
-            padding: 6px 16px;
-            background: white;
-            border: 1px solid #d1d5db;
-            border-radius: 4px 4px 0 0;
-            cursor: pointer;
-            font-size: 12px;
-            color: #374151;
-        }
-        .excel-sheet-tab.active {
-            background: #4472C4;
-            color: white;
-            border-color: #2F5597;
-        }
+        .excel-sheet-tabs { display: flex; background: #f3f4f6; border-top: 1px solid #d1d5db; padding: 4px; gap: 4px; }
+        .excel-sheet-tab { padding: 6px 16px; background: white; border: 1px solid #d1d5db; border-radius: 4px 4px 0 0; cursor: pointer; font-size: 12px; color: #374151; }
+        .excel-sheet-tab.active { background: #4472C4; color: white; border-color: #2F5597; }
 
-        /* ----- UPLOAD LIST ITEM ----- */
-        .file-list-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 8px;
-        }
-        .dark .file-list-item {
-            background: #374151;
-            border-color: #4b5563;
-        }
+        .file-list-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; }
+        .dark .file-list-item { background: #374151; border-color: #4b5563; }
 
-        /* ----- SIDEBAR ANIMATION ----- */
-        .sidebar-transition {
-            transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
-        }
-        .sidebar-hidden {
-            transform: translateX(100%);
-            width: 0 !important;
-            padding: 0 !important;
-            opacity: 0;
-        }
+        .sidebar-panel { transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease; }
+        .sidebar-hidden { transform: translateX(100%); width: 0 !important; padding: 0 !important; opacity: 0; }
 
-        /* ----- PROJECT HIERARCHY ----- */
         .project-hierarchy { display: flex; flex-direction: column; gap: 12px; }
-        .main-project {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .dark .main-project {
-            background: #374151;
-            border-color: #4b5563;
-        }
-        .main-project:hover {
-            border-color: var(--primary-500);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-        }
-        .subproject-toggle {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 16px; margin-top: 16px;
-            background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;
-            cursor: pointer;
-        }
+        .main-project { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; cursor: pointer; }
+        .dark .main-project { background: #374151; border-color: #4b5563; }
+        .main-project:hover { border-color: var(--primary-500); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .subproject-toggle { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; margin-top: 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; }
         .dark .subproject-toggle { background: #1f2937; border-color: #4b5563; }
-        .subproject-content {
-            display: none;
-            margin-top: 12px;
-            padding-left: 24px;
-            border-left: 2px solid var(--primary-200);
-            margin-left: 12px;
-        }
+        .subproject-content { display: none; margin-top: 12px; padding-left: 24px; border-left: 2px solid var(--primary-200); margin-left: 12px; }
         .subproject-content.expanded { display: block; }
-        .subproject-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 16px; margin: 8px 0;
-            background: white; border: 1px solid #e5e7eb; border-radius: 8px;
-            cursor: pointer;
-        }
+        .subproject-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; margin: 8px 0; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; }
         .dark .subproject-item { background: #1f2937; border-color: #4b5563; }
         .subproject-item:hover { border-color: var(--primary-500); background: var(--primary-50); }
         .dark .subproject-item:hover { background: rgba(59,130,246,0.1); }
 
-        /* ----- ZOOM CONTROLS ----- */
         .zoom-controls-overlay {
-            position: fixed; bottom: 30px; left: 50%;
-            transform: translateX(-50%);
-            background: rgba(17,24,39,0.9);
-            backdrop-filter: blur(10px);
-            padding: 8px 16px;
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            z-index: 100;
-            border: 1px solid rgba(255,255,255,0.1);
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(17, 25, 40, 0.75); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 32px 0 rgba(0,0,0,0.36);
+            padding: 8px 16px; border-radius: 50px; display: flex; align-items: center; gap: 12px; z-index: 100;
         }
-        .zoom-btn {
-            width: 36px; height: 36px; border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            color: white; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.2s; border: none;
-        }
+        .zoom-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; }
         .zoom-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
         .zoom-btn:active { transform: scale(0.95); }
-        .zoom-level-display {
-            color: white; font-family: monospace; font-size: 14px;
-            min-width: 60px; text-align: center;
-        }
+        .zoom-level-display { color: white; font-family: monospace; font-size: 14px; min-width: 60px; text-align: center; }
 
-        /* ----- SECTION HEADERS (DARK MODE DISTINCTION) ----- */
         .section-header {
             display: flex; align-items: center; justify-content: space-between;
             padding: 14px 20px;
@@ -276,10 +105,7 @@
             border: 1px solid #334155;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
         }
-        .dark .section-header h2,
-        .dark .section-header i {
-            color: #f1f5f9;
-        }
+        .dark .section-header h2, .dark .section-header i { color: #f1f5f9; }
         .section-content {
             background: white; border-radius: 16px; padding: 24px;
             transition: all 0.3s; border: 1px solid #e5e7eb;
@@ -291,34 +117,44 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        /* ----- EMPTY STATE ----- */
         .empty-state { text-align: center; padding: 60px 20px; }
-        .empty-state-icon {
-            width: 80px; height: 80px; margin: 0 auto 20px;
-            background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        }
-        .dark .empty-state-icon {
-            background: linear-gradient(135deg, var(--primary-900), var(--primary-800));
-        }
+        .empty-state-icon { width: 80px; height: 80px; margin: 0 auto 20px; background: linear-gradient(135deg, var(--primary-100), var(--primary-200)); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .dark .empty-state-icon { background: linear-gradient(135deg, var(--primary-900), var(--primary-800)); }
 
-        /* ----- PREVIEW LOADING ----- */
-        .preview-loading {
-            display: flex; align-items: center; justify-content: center; height: 100%;
-        }
-        .zoomable-content {
-            transition: transform 0.15s cubic-bezier(0.4,0,0.2,1);
-            transform-origin: center top;
-        }
+        .preview-loading { display: flex; align-items: center; justify-content: center; height: 100%; }
+        .zoomable-content { transition: transform 0.15s cubic-bezier(0.4,0,0.2,1); transform-origin: center top; }
 
-        /* ----- RESPONSIVE TWEAKS ----- */
-        @media (max-width: 640px) {
-            .excel-table { font-size: 11px; }
-            .excel-table th, .excel-table td { padding: 4px 8px; }
+        .toast {
+            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+            background: white; color: #1f2937; padding: 12px 20px; border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 12px;
+            transform: translateX(120%); transition: transform 0.3s ease;
+            border-left: 4px solid var(--primary-500);
         }
+        .dark .toast { background: #1f2937; color: #f3f4f6; border-left-color: var(--primary-400); }
+        .toast.show { transform: translateX(0); }
+        .toast i { font-size: 1.25rem; }
+        .toast-success i { color: #10b981; }
+        .toast-error i { color: #ef4444; }
+        .toast-info i { color: #3b82f6; }
+
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+        .dark .skeleton { background: linear-gradient(90deg, #2d3748 25%, #4a5568 50%, #2d3748 75%); background-size: 200% 100%; }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+            outline: 2px solid var(--primary-500);
+            outline-offset: 2px;
+        }
+        .modal-enter { animation: modalSlideUp 0.3s ease-out; }
+        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="antialiased">
+<body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 antialiased">
+
+    <!-- ========== TOAST CONTAINER ========== -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3"></div>
 
     <!-- ========== LOGIN PAGE ========== -->
     <div id="loginPage" class="min-h-screen bg-gradient-to-br from-gray-900 via-primary-900 to-gray-900 flex items-center justify-center p-4">
@@ -328,7 +164,7 @@
                     <i class="fas fa-folder-open text-3xl text-white"></i>
                 </div>
                 <h1 class="text-3xl font-bold text-white mb-2">Project Vault</h1>
-                <p class="text-gray-400">Secure local document management</p>
+                <p class="text-gray-400">Your documents, anywhere, secured</p>
             </div>
             <div class="glass-panel rounded-2xl p-8 shadow-2xl">
                 <div class="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
@@ -361,7 +197,7 @@
                     </button>
                 </form>
                 <div class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                    <p>Data stored locally in your browser · 100% private</p>
+                    <p>🔐 Cloud‑powered · Access from any device</p>
                 </div>
             </div>
         </div>
@@ -369,7 +205,7 @@
 
     <!-- ========== MAIN DASHBOARD ========== -->
     <div id="dashboardPage" class="hidden min-h-screen bg-gray-50 dark:bg-gray-900 theme-transition">
-        <!-- Header -->
+        <!-- Header (exactly as before – keep your original header) -->
         <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 shadow-sm theme-transition">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
@@ -380,13 +216,9 @@
                         <h1 class="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">Project Vault</h1>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Toggle Theme">
-                            <i id="themeIcon" class="fas fa-moon"></i>
-                        </button>
+                        <button onclick="toggleTheme()" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Toggle Theme"><i id="themeIcon" class="fas fa-moon"></i></button>
                         <div class="relative group">
-                            <button class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Theme Color">
-                                <i class="fas fa-palette text-primary-600"></i>
-                            </button>
+                            <button class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Theme Color"><i class="fas fa-palette text-primary-600"></i></button>
                             <div class="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-3 hidden group-hover:block z-50">
                                 <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">Theme Color</p>
                                 <div class="grid grid-cols-5 gap-2">
@@ -406,16 +238,14 @@
                         </div>
                         <div class="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden md:block"></div>
                         <span id="userEmail" class="text-sm text-gray-600 dark:text-gray-300 hidden md:block font-medium max-w-[150px] truncate"></span>
-                        <button onclick="logout()" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors" title="Sign Out">
-                            <i class="fas fa-sign-out-alt text-lg"></i>
-                        </button>
+                        <button onclick="logout()" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors" title="Sign Out"><i class="fas fa-sign-out-alt text-lg"></i></button>
                     </div>
                 </div>
             </div>
         </header>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Global Search & Action Bar -->
+            <!-- Search & Action Bar -->
             <div class="flex flex-col md:flex-row gap-4 mb-8">
                 <div class="flex-1 relative">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
@@ -485,7 +315,7 @@
         </div>
     </div>
 
-    <!-- ========== PROJECT DETAIL PAGE (for viewing a specific project / sub‑project) ========== -->
+    <!-- ========== PROJECT DETAIL PAGE ========== -->
     <div id="projectDetailPage" class="hidden min-h-screen bg-gray-50 dark:bg-gray-900 theme-transition">
         <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 shadow-sm theme-transition">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -516,14 +346,12 @@
             </div>
         </header>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Sub‑projects list (if any) -->
             <div id="subProjectsSection" class="mb-8 hidden">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <i class="fas fa-folder-tree text-primary-600"></i> Sub Projects
                 </h2>
                 <div id="subProjectsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8"></div>
             </div>
-            <!-- Documents in this project -->
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -559,7 +387,6 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <!-- Desktop zoom controls -->
                 <div class="hidden md:flex items-center gap-1 bg-gray-700 rounded-lg p-1 mr-2">
                     <button onclick="adjustZoom(-0.1)" class="p-1.5 hover:bg-gray-600 rounded text-gray-300 transition-colors"><i class="fas fa-minus text-xs"></i></button>
                     <span id="zoomLevel" class="text-gray-300 text-sm w-12 text-center font-mono">100%</span>
@@ -577,14 +404,14 @@
         </div>
         <div class="flex-1 overflow-auto flex items-start justify-center p-4 sm:p-8 relative bg-gray-900" id="viewerContainer">
             <div id="viewerContent" class="w-full h-full flex items-start justify-center transition-all duration-300"></div>
-            <!-- Floating zoom controls (mobile/tablet) -->
+            <!-- Floating zoom controls -->
             <div class="zoom-controls-overlay xl:hidden">
                 <button onclick="adjustZoom(-0.1)" class="zoom-btn"><i class="fas fa-minus"></i></button>
                 <span id="floatingZoomLevel" class="zoom-level-display">100%</span>
                 <button onclick="adjustZoom(0.1)" class="zoom-btn"><i class="fas fa-plus"></i></button>
                 <button onclick="resetZoom()" class="zoom-btn" title="Reset Zoom"><i class="fas fa-compress"></i></button>
             </div>
-            <!-- Document details sidebar -->
+            <!-- Sidebar -->
             <div id="viewerSidebar" class="hidden xl:block fixed right-0 top-16 bottom-0 w-80 dark-glass border-l border-gray-700 p-6 overflow-y-auto custom-scrollbar sidebar-transition">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-white font-semibold flex items-center gap-2"><i class="fas fa-info-circle text-primary-400"></i> Document Details</h3>
@@ -609,7 +436,7 @@
     <!-- ========== MODALS ========== -->
     <!-- UPLOAD MODAL -->
     <div id="uploadModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl shadow-2xl animate-[slideUp_0.3s_ease-out] my-auto theme-transition max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl shadow-2xl modal-enter my-auto theme-transition max-h-[90vh] overflow-hidden flex flex-col">
             <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-t-2xl flex-shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
@@ -659,9 +486,9 @@
         </div>
     </div>
 
-    <!-- PROJECT / SUB‑PROJECT MODAL -->
+    <!-- PROJECT MODAL -->
     <div id="projectModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl animate-[slideUp_0.3s_ease-out] theme-transition">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl modal-enter theme-transition">
             <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-t-2xl">
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white" id="projectModalTitle">New Project</h2>
                 <button onclick="closeProjectModal()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"><i class="fas fa-times text-gray-500 dark:text-gray-400"></i></button>
@@ -695,9 +522,9 @@
         </div>
     </div>
 
-    <!-- DELETE CONFIRMATION MODAL -->
+    <!-- DELETE MODAL -->
     <div id="deleteModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm shadow-2xl animate-[slideUp_0.3s_ease-out] p-6 text-center theme-transition">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm shadow-2xl modal-enter p-6 text-center theme-transition">
             <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
                 <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
             </div>
@@ -710,54 +537,91 @@
         </div>
     </div>
 
-    <!-- GLOBAL LOADING OVERLAY -->
+    <!-- LOADING OVERLAY -->
     <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center">
         <div class="loader !w-12 !h-12 border-4"></div>
     </div>
 
-    <script>
-        // ========== 🔐 GLOBAL STATE & DATABASE (USER‑ISOLATED) ==========
-        const DB_NAME = 'ProjectVaultDB';
-        const DB_VERSION = 7;  // compound index user+project
-        let db, currentUser = null, currentProjectId = null, projectsCache = [], currentDoc = null;
-        let pdfDoc = null, pdfPages = [], uploadTags = [], selectedFiles = [], deleteTargetId = null;
-        let viewMode = 'grid', projectViewMode = 'grid', currentZoom = 1, sidebarVisible = true;
-        let previewAbortController = null;  // used to cancel slow previews
-
-        // ---------- indexedDB initialisation with compound index ----------
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const req = indexedDB.open(DB_NAME, DB_VERSION);
-                req.onerror = () => reject(req.error);
-                req.onsuccess = () => { db = req.result; resolve(db); };
-                req.onupgradeneeded = (e) => {
-                    const db = e.target.result, tx = e.target.transaction;
-                    if (!db.objectStoreNames.contains('users')) {
-                        const s = db.createObjectStore('users', { keyPath: 'email' });
-                        s.createIndex('email', 'email', { unique: true });
-                    }
-                    if (!db.objectStoreNames.contains('documents')) {
-                        const s = db.createObjectStore('documents', { keyPath: 'id', autoIncrement: true });
-                        s.createIndex('userId', 'userId', { unique: false });
-                        s.createIndex('projectId', 'projectId', { unique: false });
-                        s.createIndex('tags', 'tags', { unique: false, multiEntry: true });
-                        s.createIndex('user_project', ['userId', 'projectId'], { unique: false });
-                    } else {
-                        const s = tx.objectStore('documents');
-                        if (!s.indexNames.contains('user_project')) s.createIndex('user_project', ['userId', 'projectId'], { unique: false });
-                    }
-                    if (!db.objectStoreNames.contains('projects')) {
-                        const s = db.createObjectStore('projects', { keyPath: 'id', autoIncrement: true });
-                        s.createIndex('userId', 'userId', { unique: false });
-                        s.createIndex('parentId', 'parentId', { unique: false });
-                    }
-                    if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
-                };
-            });
+    <!-- ========== FIREBASE SDK & APP SCRIPT ========== -->
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js",
+                "firebase/storage": "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js",
+                "firebase/analytics": "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"
+            }
         }
+    </script>
+
+    <script type="module">
+        // ---------- 🔥 FIREBASE CONFIG (YOUR PROJECT) ----------
+        import { initializeApp } from 'firebase/app';
+        import { getAnalytics } from 'firebase/analytics';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+        import { getFirestore, collection, doc, addDoc, getDocs, getDoc, query, where, orderBy, deleteDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDgH9jLR_MhvXZaLPWb5s-k0DfbaUp_cOY",
+            authDomain: "team-hub-666f4.firebaseapp.com",
+            databaseURL: "https://team-hub-666f4-default-rtdb.firebaseio.com",
+            projectId: "team-hub-666f4",
+            storageBucket: "team-hub-666f4.firebasestorage.app",
+            messagingSenderId: "201156915923",
+            appId: "1:201156915923:web:a305bb570d49ace94e9a26",
+            measurementId: "G-MT2T787B79"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // ---------- GLOBAL STATE ----------
+        window.currentUser = null;
+        window.projectsCache = [];
+        window.currentProjectId = null;
+        window.currentDoc = null;
+        window.unsubscribeProjects = null;
+        window.unsubscribeDocuments = null;
+        window.unsubscribeProjectDocs = null;
+        window.viewMode = 'grid';
+        window.projectViewMode = 'grid';
+        window.currentZoom = 1;
+        window.sidebarVisible = true;
+        window.pdfDoc = null;
+        window.pdfPages = [];
+        window.uploadTags = [];
+        window.selectedFiles = [];
+        window.deleteTargetId = null;
+        window.previewAbortController = null;
+
+        // ---------- UI HELPERS ----------
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const id = 'toast-' + Date.now();
+            const toast = document.createElement('div');
+            toast.id = id;
+            toast.className = `toast ${type === 'success' ? 'toast-success' : type === 'error' ? 'toast-error' : 'toast-info'}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                               <span class="text-sm font-medium">${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        };
+
+        window.showLoading = function() { document.getElementById('loadingOverlay').classList.remove('hidden'); };
+        window.hideLoading = function() { document.getElementById('loadingOverlay').classList.add('hidden'); };
 
         // ---------- AUTH ----------
-        function toggleAuthMode(mode) {
+        window.toggleAuthMode = function(mode) {
             const loginTab = document.getElementById('loginTab'), registerTab = document.getElementById('registerTab'), submitText = document.getElementById('authSubmitText');
             if (mode === 'login') {
                 loginTab.className = 'flex-1 py-2 text-sm font-medium rounded-md transition-all bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm';
@@ -769,181 +633,578 @@
                 submitText.textContent = 'Sign Up';
             }
             document.getElementById('authForm').dataset.mode = mode;
-            hideAuthMessages();
-        }
-        function togglePasswordVisibility() {
-            const i = document.getElementById('authPassword'), icon = document.getElementById('passwordToggle');
-            i.type = i.type === 'password' ? 'text' : 'password';
-            icon.className = i.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
-        }
-        function showAuthError(msg) { document.getElementById('authError').textContent = msg; document.getElementById('authError').classList.remove('hidden'); document.getElementById('authSuccess').classList.add('hidden'); }
-        function showAuthSuccess(msg) { document.getElementById('authSuccess').textContent = msg; document.getElementById('authSuccess').classList.remove('hidden'); document.getElementById('authError').classList.add('hidden'); }
-        function hideAuthMessages() { document.getElementById('authError').classList.add('hidden'); document.getElementById('authSuccess').classList.add('hidden'); }
-        async function handleAuth(e) {
+            document.getElementById('authError').classList.add('hidden');
+            document.getElementById('authSuccess').classList.add('hidden');
+        };
+
+        window.togglePasswordVisibility = function() {
+            const input = document.getElementById('authPassword'), icon = document.getElementById('passwordToggle');
+            input.type = input.type === 'password' ? 'text' : 'password';
+            icon.className = input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+        };
+
+        window.handleAuth = async function(e) {
             e.preventDefault();
             const mode = e.target.dataset.mode || 'login';
             const email = document.getElementById('authEmail').value.trim();
-            const pw = document.getElementById('authPassword').value;
-            if (!email || !pw) return showAuthError('Please fill all fields');
-            const tx = db.transaction(['users'], 'readwrite');
-            const store = tx.objectStore('users');
-            if (mode === 'register') {
-                store.get(email).onsuccess = (e) => {
-                    if (e.target.result) showAuthError('Account already exists.');
-                    else {
-                        store.add({ email, password: pw, createdAt: new Date().toISOString() }).onsuccess = () => {
-                            showAuthSuccess('Account created! Please sign in.');
-                            setTimeout(() => toggleAuthMode('login'), 1500);
-                        };
-                    }
-                };
-            } else {
-                store.get(email).onsuccess = (e) => {
-                    const user = e.target.result;
-                    if (!user || user.password !== pw) showAuthError('Invalid email or password.');
-                    else {
-                        currentUser = user;
-                        localStorage.setItem('currentUser', JSON.stringify(user));
-                        loadTheme(); showDashboard();
-                    }
-                };
+            const password = document.getElementById('authPassword').value;
+            if (!email || !password) return showToast('Please fill all fields', 'error');
+
+            showLoading();
+            try {
+                if (mode === 'register') {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showToast('Account created! Please sign in.', 'success');
+                    setTimeout(() => toggleAuthMode('login'), 1500);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    // onAuthStateChanged will handle dashboard
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                hideLoading();
             }
-        }
-        function logout() {
-            currentUser = null; projectsCache = []; localStorage.removeItem('currentUser');
+        };
+
+        window.logout = async function() {
+            await signOut(auth);
+            if (window.unsubscribeProjects) window.unsubscribeProjects();
+            if (window.unsubscribeDocuments) window.unsubscribeDocuments();
+            if (window.unsubscribeProjectDocs) window.unsubscribeProjectDocs();
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('dashboardPage').classList.add('hidden');
             document.getElementById('viewerPage').classList.add('hidden');
             document.getElementById('projectDetailPage').classList.add('hidden');
             toggleAuthMode('login');
-        }
+        };
+
+        // ---------- AUTH STATE LISTENER ----------
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify({ email: user.email, uid: user.uid }));
+                showDashboard();
+            } else {
+                window.currentUser = null;
+                document.getElementById('loginPage').classList.remove('hidden');
+                document.getElementById('dashboardPage').classList.add('hidden');
+                document.getElementById('viewerPage').classList.add('hidden');
+                document.getElementById('projectDetailPage').classList.add('hidden');
+            }
+        });
+
+        // ---------- DASHBOARD ----------
         async function showDashboard() {
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('dashboardPage').classList.remove('hidden');
             document.getElementById('viewerPage').classList.add('hidden');
             document.getElementById('projectDetailPage').classList.add('hidden');
-            document.getElementById('userEmail').textContent = currentUser.email;
-            await loadProjects(); await loadDocuments(); updateStorageInfo();
+            document.getElementById('userEmail').textContent = window.currentUser.email;
+
+            // Real‑time projects
+            if (window.unsubscribeProjects) window.unsubscribeProjects();
+            const projectsQuery = query(
+                collection(db, 'projects'),
+                where('userId', '==', window.currentUser.uid),
+                orderBy('createdAt', 'desc')
+            );
+            window.unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
+                window.projectsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProjectsSection(window.projectsCache);
+                populateProjectSelect(window.projectsCache);
+                document.getElementById('projectsCount').textContent = window.projectsCache.length;
+            });
+
+            // Real‑time all documents
+            loadDocuments();
         }
 
-        // ---------- THEME ----------
-        async function loadTheme() {
-            if (!db || !currentUser) return;
-            const tx = db.transaction(['settings'], 'readonly');
-            tx.objectStore('settings').get('theme').onsuccess = (e) => {
-                const s = e.target.result;
-                if (s) {
-                    if (s.darkMode) { document.documentElement.classList.add('dark'); document.getElementById('themeIcon').className = 'fas fa-sun'; }
-                    if (s.color) document.documentElement.setAttribute('data-theme', s.color);
+        window.showDashboard = showDashboard;
+
+        // ---------- DOCUMENTS (real‑time) ----------
+        function loadDocuments() {
+            if (!window.currentUser) return;
+            if (window.unsubscribeDocuments) window.unsubscribeDocuments();
+            const docsQuery = query(
+                collection(db, 'documents'),
+                where('userId', '==', window.currentUser.uid),
+                orderBy('createdAt', 'desc')
+            );
+            window.unsubscribeDocuments = onSnapshot(docsQuery, (snapshot) => {
+                const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderDocuments(docs);
+                document.getElementById('allDocsCount').textContent = docs.length;
+                updateStorageInfo();
+            });
+        }
+
+        // ---------- PROJECT DOCUMENTS (real‑time) ----------
+        function loadProjectDocuments(projectId) {
+            if (!window.currentUser) return;
+            if (window.unsubscribeProjectDocs) window.unsubscribeProjectDocs();
+            const q = query(
+                collection(db, 'documents'),
+                where('userId', '==', window.currentUser.uid),
+                where('projectId', '==', projectId),
+                orderBy('createdAt', 'desc')
+            );
+            window.unsubscribeProjectDocs = onSnapshot(q, (snapshot) => {
+                let docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+                if (search) docs = docs.filter(d => d.name?.toLowerCase().includes(search) || (d.description && d.description.toLowerCase().includes(search)) || (d.tags && d.tags.some(t => t.toLowerCase().includes(search))));
+                renderProjectDocuments(docs);
+                document.getElementById('projectDocCount').textContent = docs.length;
+            });
+        }
+
+        // ---------- PROJECT RENDERING ----------
+        function renderProjectsSection(projects) {
+            const container = document.getElementById('projectsContainer');
+            const empty = document.getElementById('emptyProjectsState');
+            const roots = getHierarchy(projects);
+            if (projects.length === 0) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            empty.classList.add('hidden');
+            container.innerHTML = roots.map(p => renderProjectFolder(p)).join('');
+        }
+
+        function getHierarchy(projects) {
+            const map = new Map();
+            projects.forEach(p => map.set(p.id, { ...p, children: [] }));
+            const roots = [];
+            projects.forEach(p => {
+                if (p.parentId && map.has(p.parentId)) {
+                    map.get(p.parentId).children.push(map.get(p.id));
+                } else {
+                    roots.push(map.get(p.id));
                 }
-            };
-        }
-        async function saveTheme(darkMode, color) {
-            if (!db || !currentUser) return;
-            const tx = db.transaction(['settings'], 'readwrite');
-            tx.objectStore('settings').put({ key: 'theme', darkMode, color, userId: currentUser.email });
-        }
-        function toggleTheme() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            document.getElementById('themeIcon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-            saveTheme(isDark, document.documentElement.getAttribute('data-theme') || 'blue');
-        }
-        function setThemeColor(color) {
-            document.documentElement.setAttribute('data-theme', color);
-            saveTheme(document.documentElement.classList.contains('dark'), color);
-        }
-
-        // ---------- 🔒 LOAD PROJECTS (only for currentUser) ----------
-        async function loadProjects() {
-            if (!currentUser) return [];
-            return new Promise((resolve) => {
-                const tx = db.transaction(['projects'], 'readonly');
-                const index = tx.objectStore('projects').index('userId');
-                index.getAll(currentUser.email).onsuccess = (e) => {
-                    projectsCache = e.target.result || [];
-                    renderProjectsSection(projectsCache);
-                    populateProjectSelect(projectsCache);
-                    document.getElementById('projectsCount').textContent = projectsCache.length;
-                    resolve(projectsCache);
-                };
             });
+            return roots;
         }
 
-        // ---------- 🔒 LOAD ALL DOCUMENTS (only for currentUser) ----------
-        async function loadDocuments() {
-            if (!currentUser) return [];
-            return new Promise((resolve) => {
-                const tx = db.transaction(['documents'], 'readonly');
-                const index = tx.objectStore('documents').index('userId');
-                index.getAll(currentUser.email).onsuccess = (e) => {
-                    const docs = e.target.result || [];
-                    renderDocuments(docs);
-                    document.getElementById('allDocsCount').textContent = docs.length;
-                    resolve(docs);
-                };
-            });
+        function renderProjectFolder(p, isSub = false) {
+            return `<div class="${isSub ? 'sub-project' : ''}">
+                <div class="main-project" onclick="openProjectDetail('${p.id}')">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-12 h-12 rounded-lg bg-${p.color}-100 dark:bg-${p.color}-900/30 flex items-center justify-center">
+                            <i class="fas fa-folder text-2xl text-${p.color}-600"></i>
+                        </div>
+                        ${p.children.length ? `<span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full">${p.children.length} sub</span>` : ''}
+                    </div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-1 truncate">${escapeHtml(p.name)}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-2 h-10">${escapeHtml(p.description || 'No description')}</p>
+                    <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <span><i class="fas fa-file"></i> 0 files</span>
+                        <span>${formatDate(p.createdAt)}</span>
+                    </div>
+                </div>
+                ${p.children.length ? p.children.map(c => renderProjectFolder(c, true)).join('') : ''}
+            </div>`;
         }
 
-        // ---------- 🔒 LOAD PROJECT DOCUMENTS (user+project) ----------
-        async function loadProjectDocuments(projectId) {
-            if (!currentUser) return;
-            return new Promise((resolve) => {
-                const tx = db.transaction(['documents'], 'readonly');
-                const store = tx.objectStore('documents');
-                if (store.indexNames.contains('user_project')) {
-                    const idx = store.index('user_project');
-                    const range = IDBKeyRange.only([currentUser.email, projectId]);
-                    idx.getAll(range).onsuccess = (e) => {
-                        let docs = e.target.result || [];
-                        const q = document.getElementById('searchInput')?.value.toLowerCase() || '';
-                        if (q) docs = docs.filter(d => d.name.toLowerCase().includes(q) || (d.description && d.description.toLowerCase().includes(q)) || (d.tags && d.tags.some(t => t.toLowerCase().includes(q))));
-                        docs.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-                        renderProjectDocuments(docs);
-                        document.getElementById('projectDocCount').textContent = docs.length;
-                        resolve(docs);
-                    };
-                } else { /* fallback – very rare */ }
-            });
+        function populateProjectSelect(projects) {
+            const sel = document.getElementById('uploadProject');
+            const roots = getHierarchy(projects);
+            let opts = '<option value="">No Project</option>';
+            function walk(list, lvl = 0) {
+                list.forEach(p => {
+                    opts += `<option value="${p.id}">${'— '.repeat(lvl)}${escapeHtml(p.name)}</option>`;
+                    if (p.children.length) walk(p.children, lvl + 1);
+                });
+            }
+            walk(roots);
+            sel.innerHTML = opts;
         }
 
-        // ---------- 🔒 VIEW DOCUMENT – ownership check ----------
-        async function viewDocument(id) {
-            if (!currentUser) return;
-            const tx = db.transaction(['documents'], 'readonly');
-            tx.objectStore('documents').get(id).onsuccess = (e) => {
-                const doc = e.target.result;
-                if (!doc || doc.userId !== currentUser.email) {
-                    alert('Access denied – this document does not belong to you.');
-                    return;
+        // ---------- PROJECT DETAIL ----------
+        window.openProjectDetail = async function(id) {
+            window.currentProjectId = id;
+            const p = window.projectsCache.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('dashboardPage').classList.add('hidden');
+            document.getElementById('projectDetailPage').classList.remove('hidden');
+            document.getElementById('projectDetailTitle').textContent = p.name;
+            document.getElementById('projectDetailPath').textContent = getProjectPath(id);
+            document.getElementById('projectDetailIcon').className = `w-10 h-10 rounded-xl flex items-center justify-center shadow-lg bg-${p.color}-500`;
+            const lvl = getProjectLevel(id);
+            document.getElementById('addSubProjectBtn').style.display = lvl >= 2 ? 'none' : 'flex';
+            await loadProjectSubProjects(id);
+            loadProjectDocuments(id);
+        };
+
+        window.closeProjectDetail = function() {
+            window.currentProjectId = null;
+            document.getElementById('projectDetailPage').classList.add('hidden');
+            document.getElementById('dashboardPage').classList.remove('hidden');
+            loadDocuments();
+        };
+
+        function getProjectPath(id) {
+            let path = [], cur = window.projectsCache.find(x => x.id === id);
+            while (cur) { path.unshift(cur.name); cur = window.projectsCache.find(x => x.id === cur.parentId); }
+            return path.join(' / ');
+        }
+
+        function getProjectLevel(id) {
+            let lvl = 0, cur = window.projectsCache.find(x => x.id === id);
+            while (cur && cur.parentId) { lvl++; cur = window.projectsCache.find(x => x.id === cur.parentId); }
+            return lvl;
+        }
+
+        async function loadProjectSubProjects(pid) {
+            const subs = window.projectsCache.filter(p => p.parentId === pid);
+            const container = document.getElementById('subProjectsContainer');
+            const section = document.getElementById('subProjectsSection');
+            if (subs.length === 0) { section.classList.add('hidden'); return; }
+            section.classList.remove('hidden');
+            container.innerHTML = subs.map(sp => `
+                <div class="folder-card bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 cursor-pointer hover:border-primary-400 dark:hover:border-primary-600" onclick="openProjectDetail('${sp.id}')">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-${sp.color}-100 dark:bg-${sp.color}-900/30 flex items-center justify-center">
+                            <i class="fas fa-folder text-xl text-${sp.color}-600"></i>
+                        </div>
+                        <div class="min-w-0"><h4 class="font-medium text-gray-900 dark:text-white truncate">${escapeHtml(sp.name)}</h4><p class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(sp.description || '')}</p></div>
+                    </div>
+                </div>`).join('');
+        }
+
+        // ---------- DOCUMENT RENDERING ----------
+        function renderDocuments(docs) {
+            const container = document.getElementById('documentsContainer'), empty = document.getElementById('emptyState');
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = docs.filter(d => !q || d.name?.toLowerCase().includes(q) || (d.description && d.description.toLowerCase().includes(q)) || (d.tags && d.tags.some(t => t.toLowerCase().includes(q))));
+            filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            document.getElementById('docCount').textContent = filtered.length;
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            empty.classList.add('hidden');
+            if (window.viewMode === 'grid') {
+                container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
+                container.innerHTML = filtered.map(d => createDocCard(d)).join('');
+            } else {
+                container.innerHTML = createDocList(filtered);
+            }
+        }
+
+        function renderProjectDocuments(docs) {
+            const container = document.getElementById('projectDocumentsContainer'), empty = document.getElementById('emptyProjectDocsState');
+            if (docs.length === 0) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            empty.classList.add('hidden');
+            if (window.projectViewMode === 'grid') {
+                container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
+                container.innerHTML = docs.map(d => createDocCard(d)).join('');
+            } else {
+                container.innerHTML = createDocList(docs);
+            }
+        }
+
+        function createDocCard(d) {
+            const icon = getFileIcon(d.fileType), col = getFileColor(d.fileType);
+            const proj = window.projectsCache.find(p => p.id == d.projectId);
+            return `<div class="file-card bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 relative group cursor-pointer theme-transition" onclick="viewDocument('${d.id}')">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center">
+                        <i class="${icon} ${col} text-2xl"></i>
+                    </div>
+                    <button onclick="event.stopPropagation(); showDeleteModal('${d.id}')" class="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-600 rounded-lg transition-colors opacity-0 group-hover:opacity-100"><i class="fas fa-trash-alt"></i></button>
+                </div>
+                <h3 class="font-semibold text-gray-900 dark:text-white mb-1 truncate" title="${escapeHtml(d.name)}">${escapeHtml(d.name)}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 h-10">${escapeHtml(d.description || 'No description')}</p>
+                ${proj ? `<div class="flex items-center gap-2 mb-3"><span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-${proj.color}-500"></span>${escapeHtml(proj.name)}</span></div>` : ''}
+                <div class="flex flex-wrap gap-1 mb-4">${(d.tags || []).map(t => `<span class="px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded-full">#${escapeHtml(t)}</span>`).join('')}</div>
+                <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <span><i class="far fa-clock"></i>${formatDate(d.createdAt)}</span>
+                    <span>${formatSize(d.fileSize)}</span>
+                </div>
+            </div>`;
+        }
+
+        function createDocList(docs) {
+            return `<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+                <table class="w-full"><thead class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                    <tr><th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">Name</th>
+                    <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3 hidden md:table-cell">Project</th>
+                    <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3 hidden sm:table-cell">Tags</th>
+                    <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">Size</th>
+                    <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3 hidden lg:table-cell">Date</th>
+                    <th class="px-6 py-3 w-10"></th></tr>
+                </thead><tbody class="divide-y divide-gray-200 dark:divide-gray-700">` +
+                docs.map(d => {
+                    const icon = getFileIcon(d.fileType), col = getFileColor(d.fileType);
+                    const proj = window.projectsCache.find(p => p.id == d.projectId);
+                    return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group" onclick="viewDocument('${d.id}')">
+                        <td class="px-6 py-4"><div class="flex items-center gap-3"><i class="${icon} ${col} text-lg"></i><div><p class="font-medium text-gray-900 dark:text-white">${escapeHtml(d.name)}</p><p class="text-sm text-gray-500 dark:text-gray-400 md:hidden">${escapeHtml(d.description?.substring(0,50) || '')}...</p></div></div></td>
+                        <td class="px-6 py-4 hidden md:table-cell">${proj ? `<span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-${proj.color}-500"></span>${escapeHtml(proj.name)}</span>` : '-'}</td>
+                        <td class="px-6 py-4 hidden sm:table-cell"><div class="flex gap-1 flex-wrap">${(d.tags || []).slice(0,2).map(t=>`<span class="px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded-full">${escapeHtml(t)}</span>`).join('')}${d.tags?.length>2?`<span class="text-xs text-gray-400 dark:text-gray-500">+${d.tags.length-2}</span>`:''}</div></td>
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">${formatSize(d.fileSize)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">${formatDate(d.createdAt)}</td>
+                        <td class="px-6 py-4"><button onclick="event.stopPropagation(); showDeleteModal('${d.id}')" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-600 rounded-lg transition-colors opacity-0 group-hover:opacity-100"><i class="fas fa-trash-alt"></i></button></td>
+                    </tr>`;
+                }).join('') + `</tbody></table></div>`;
+        }
+
+        function getFileIcon(t) {
+            if (!t) return 'fas fa-file';
+            if (t.includes('pdf')) return 'fas fa-file-pdf';
+            if (t.includes('image')) return 'fas fa-file-image';
+            if (t.includes('word') || t.includes('officedocument.word')) return 'fas fa-file-word';
+            if (t.includes('excel') || t.includes('sheet') || t.includes('csv')) return 'fas fa-file-excel';
+            if (t.includes('powerpoint')) return 'fas fa-file-powerpoint';
+            if (t.includes('text') || t.includes('plain')) return 'fas fa-file-alt';
+            if (t.includes('video')) return 'fas fa-file-video';
+            if (t.includes('audio')) return 'fas fa-file-audio';
+            if (t.includes('zip') || t.includes('compressed')) return 'fas fa-file-archive';
+            return 'fas fa-file';
+        }
+
+        function getFileColor(t) {
+            if (!t) return 'text-gray-400';
+            if (t.includes('pdf')) return 'text-red-500';
+            if (t.includes('image')) return 'text-purple-500';
+            if (t.includes('word')) return 'text-blue-500';
+            if (t.includes('excel')||t.includes('sheet')||t.includes('csv')) return 'text-green-500';
+            if (t.includes('powerpoint')) return 'text-orange-500';
+            if (t.includes('text')||t.includes('plain')) return 'text-gray-500';
+            if (t.includes('video')) return 'text-red-400';
+            if (t.includes('audio')) return 'text-yellow-500';
+            if (t.includes('zip')||t.includes('compressed')) return 'text-yellow-600';
+            return 'text-gray-400';
+        }
+
+        // ---------- SEARCH / VIEW MODE ----------
+        window.handleSearch = function() {
+            document.getElementById('clearSearchBtn').classList.toggle('hidden', !document.getElementById('searchInput').value);
+            if (window.currentProjectId) loadProjectDocuments(window.currentProjectId);
+            else loadDocuments();
+        };
+        window.clearSearch = function() { document.getElementById('searchInput').value = ''; handleSearch(); };
+        window.setViewMode = function(m) {
+            window.viewMode = m;
+            document.getElementById('viewGrid').className = `p-2 rounded-md transition-colors ${m==='grid'?'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white':'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`;
+            document.getElementById('viewList').className = `p-2 rounded-md transition-colors ${m==='list'?'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white':'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`;
+            loadDocuments();
+        };
+        window.setProjectViewMode = function(m) {
+            window.projectViewMode = m;
+            document.getElementById('projectViewGrid').className = `p-2 rounded-md transition-colors ${m==='grid'?'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white':'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`;
+            document.getElementById('projectViewList').className = `p-2 rounded-md transition-colors ${m==='list'?'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white':'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`;
+            if (window.currentProjectId) loadProjectDocuments(window.currentProjectId);
+        };
+        window.toggleSection = function(id, header) {
+            const s = document.getElementById(id), icon = header.querySelector('.section-icon');
+            if (s.classList.contains('collapsed')) {
+                s.classList.remove('collapsed');
+                s.style.maxHeight = s.scrollHeight + 'px';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                s.classList.add('collapsed');
+                s.style.maxHeight = '0';
+                icon.style.transform = 'rotate(-90deg)';
+            }
+        };
+
+        // ---------- UPLOAD (Firebase Storage + Firestore) ----------
+        window.openUploadModal = function() {
+            document.getElementById('uploadModal').classList.remove('hidden');
+            window.selectedFiles = [];
+            window.uploadTags = [];
+            renderTags();
+            document.getElementById('fileInput').value = '';
+            document.getElementById('uploadProject').value = window.currentProjectId || '';
+            updateFileList();
+            document.getElementById('uploadSettings').classList.add('hidden');
+            document.getElementById('uploadSubmitBtn').disabled = true;
+        };
+        window.closeUploadModal = function() { document.getElementById('uploadModal').classList.add('hidden'); window.selectedFiles = []; };
+        window.openUploadModalForProject = function() { openUploadModal(); if (window.currentProjectId) document.getElementById('uploadProject').value = window.currentProjectId; };
+        window.handleFileSelect = function(input) {
+            const files = Array.from(input.files);
+            files.forEach(f => window.selectedFiles.push({ file: f, name: f.name.replace(/\.[^/.]+$/, ''), description: '' }));
+            updateFileList();
+        };
+        function updateFileList() {
+            const container = document.getElementById('filesContainer'), list = document.getElementById('selectedFilesList'), settings = document.getElementById('uploadSettings'), btn = document.getElementById('uploadSubmitBtn');
+            document.getElementById('fileCount').textContent = window.selectedFiles.length;
+            document.getElementById('uploadCountText').textContent = `${window.selectedFiles.length} file(s) selected`;
+            if (window.selectedFiles.length === 0) {
+                list.classList.add('hidden');
+                settings.classList.add('hidden');
+                btn.disabled = true;
+                return;
+            }
+            list.classList.remove('hidden');
+            settings.classList.remove('hidden');
+            btn.disabled = false;
+            container.innerHTML = window.selectedFiles.map((item, idx) => `<div class="file-list-item">
+                <i class="${getFileIcon(item.file.type)} ${getFileColor(item.file.type)} text-xl flex-shrink-0"></i>
+                <div class="flex-1 min-w-0"><input type="text" value="${escapeHtml(item.name)}" onchange="updateFileName(${idx}, this.value)" placeholder="File name" class="w-full mb-1"><input type="text" value="${escapeHtml(item.description)}" onchange="updateFileDescription(${idx}, this.value)" placeholder="Description (optional)" class="w-full text-sm text-gray-600 dark:text-gray-400"></div>
+                <span class="text-xs text-gray-500 flex-shrink-0">${formatSize(item.file.size)}</span>
+                <button onclick="removeFile(${idx})" class="remove-file-btn flex-shrink-0"><i class="fas fa-times"></i></button>
+            </div>`).join('');
+        }
+        window.updateFileName = function(i, v) { window.selectedFiles[i].name = v; };
+        window.updateFileDescription = function(i, v) { window.selectedFiles[i].description = v; };
+        window.removeFile = function(i) { window.selectedFiles.splice(i,1); updateFileList(); };
+        window.handleTagInput = function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const val = e.target.value.trim();
+                if (val && !window.uploadTags.includes(val)) {
+                    window.uploadTags.push(val);
+                    renderTags();
+                    e.target.value = '';
                 }
-                currentDoc = doc;
-                openViewerWithDoc(doc);
-            };
+            } else if (e.key === 'Backspace' && !e.target.value && window.uploadTags.length) {
+                window.uploadTags.pop();
+                renderTags();
+            }
+        };
+        function renderTags() {
+            document.getElementById('tagContainer').innerHTML = window.uploadTags.map((t,i)=>`<span class="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded-md flex items-center gap-1">${escapeHtml(t)}<button onclick="removeTag(${i})" class="hover:text-primary-900 dark:hover:text-primary-300"><i class="fas fa-times"></i></button></span>`).join('');
         }
+        window.removeTag = function(i) { window.uploadTags.splice(i,1); renderTags(); };
+        function readFileAsBase64(f) { return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); }); }
+        window.handleMultipleUpload = async function() {
+            if (!window.selectedFiles.length) return;
+            const btn = document.getElementById('uploadSubmitBtn'), orig = btn.innerHTML;
+            btn.innerHTML = '<div class="loader"></div> Uploading...'; btn.disabled = true;
+            const pid = document.getElementById('uploadProject').value || null;
+            showLoading();
+            try {
+                for (let it of window.selectedFiles) {
+                    // Upload file to Storage
+                    const fileRef = ref(storage, `users/${window.currentUser.uid}/documents/${Date.now()}_${it.file.name}`);
+                    await uploadBytes(fileRef, it.file);
+                    const downloadURL = await getDownloadURL(fileRef);
+                    // Save metadata to Firestore
+                    await addDoc(collection(db, 'documents'), {
+                        userId: window.currentUser.uid,
+                        name: it.name || it.file.name,
+                        description: it.description || '',
+                        fileURL: downloadURL,
+                        storagePath: fileRef.fullPath,
+                        fileType: it.file.type,
+                        fileName: it.file.name,
+                        fileSize: it.file.size,
+                        projectId: pid,
+                        tags: window.uploadTags,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+                closeUploadModal();
+                showToast(`✅ ${window.selectedFiles.length} file(s) uploaded successfully`);
+                updateStorageInfo();
+            } catch (error) {
+                console.error(error);
+                showToast('Upload failed: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+                btn.innerHTML = orig;
+                btn.disabled = false;
+            }
+        };
 
-        // ---------- 🔒 DELETE – ownership check ----------
-        function showDeleteModal(id) { deleteTargetId = id; document.getElementById('deleteModal').classList.remove('hidden'); }
-        function closeDeleteModal() { deleteTargetId = null; document.getElementById('deleteModal').classList.add('hidden'); }
-        async function confirmDelete() {
-            if (!deleteTargetId || !currentUser) return;
-            const checkTx = db.transaction(['documents'], 'readonly');
-            checkTx.objectStore('documents').get(deleteTargetId).onsuccess = async (e) => {
-                const doc = e.target.result;
-                if (!doc || doc.userId !== currentUser.email) { alert('Permission denied'); closeDeleteModal(); return; }
-                const tx = db.transaction(['documents'], 'readwrite');
-                tx.objectStore('documents').delete(deleteTargetId).onsuccess = () => {
-                    closeDeleteModal();
-                    currentProjectId ? loadProjectDocuments(currentProjectId) : loadDocuments();
-                    updateStorageInfo();
+        // ---------- PROJECT CREATE ----------
+        window.openProjectModal = function() {
+            document.getElementById('projectModalTitle').textContent = 'New Project';
+            document.getElementById('parentProjectId').value = '';
+            document.getElementById('projectModal').classList.remove('hidden');
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDescription').value = '';
+            selectProjectColor('blue');
+        };
+        window.closeProjectModal = function() { document.getElementById('projectModal').classList.add('hidden'); };
+        window.openSubProjectModal = function() {
+            document.getElementById('projectModalTitle').textContent = 'New Sub Project';
+            document.getElementById('parentProjectId').value = window.currentProjectId;
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDescription').value = '';
+            selectProjectColor('blue');
+            document.getElementById('projectModal').classList.remove('hidden');
+        };
+        window.selectProjectColor = function(c) {
+            document.getElementById('projectColor').value = c;
+            document.querySelectorAll('.project-color-btn').forEach(b => {
+                if (b.dataset.color === c) {
+                    b.classList.add('ring-2','ring-offset-2');
+                    b.classList.remove('hover:ring-2','hover:ring-offset-2');
+                } else {
+                    b.classList.remove('ring-2','ring-offset-2');
+                    b.classList.add('hover:ring-2','hover:ring-offset-2');
+                }
+            });
+        };
+        window.handleCreateProject = async function(e) {
+            e.preventDefault();
+            const proj = {
+                userId: window.currentUser.uid,
+                name: document.getElementById('projectName').value,
+                description: document.getElementById('projectDescription').value,
+                color: document.getElementById('projectColor').value,
+                parentId: document.getElementById('parentProjectId').value || null,
+                createdAt: new Date().toISOString()
+            };
+            showLoading();
+            try {
+                await addDoc(collection(db, 'projects'), proj);
+                closeProjectModal();
+                showToast('📁 Project created');
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // ---------- VIEW DOCUMENT ----------
+        window.viewDocument = async function(id) {
+            const docRef = doc(db, 'documents', id);
+            const docSnap = await getDoc(docRef);
+            if (!docSnap.exists()) return showToast('Document not found', 'error');
+            const doc = { id: docSnap.id, ...docSnap.data() };
+            if (doc.userId !== window.currentUser.uid) return showToast('Access denied', 'error');
+
+            // Fetch file data via URL
+            showLoading();
+            try {
+                const response = await fetch(doc.fileURL);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    doc.fileData = e.target.result;
+                    window.currentDoc = doc;
+                    openViewerWithDoc(doc);
+                    hideLoading();
                 };
-            };
-        }
+                reader.readAsDataURL(blob);
+            } catch (error) {
+                showToast('Failed to load document', 'error');
+                hideLoading();
+            }
+        };
 
-        // ---------- ⚡ DOCUMENT PREVIEW (optimised) ----------
+        // ---------- VIEWER ----------
         function openViewerWithDoc(doc) {
-            if (previewAbortController) previewAbortController.abort();
-            previewAbortController = new AbortController();
-            const signal = previewAbortController.signal;
+            if (window.previewAbortController) window.previewAbortController.abort();
+            window.previewAbortController = new AbortController();
+            const signal = window.previewAbortController.signal;
 
             document.getElementById('dashboardPage').classList.add('hidden');
             document.getElementById('projectDetailPage').classList.add('hidden');
@@ -952,7 +1213,7 @@
             document.getElementById('viewerTitle').textContent = doc.name;
             document.getElementById('viewerMeta').textContent = `${formatSize(doc.fileSize)} • ${doc.fileName}`;
             document.getElementById('sidebarDescription').textContent = doc.description || 'No description';
-            const project = projectsCache.find(p => p.id == doc.projectId);
+            const project = window.projectsCache.find(p => p.id == doc.projectId);
             document.getElementById('sidebarProject').innerHTML = project ? `<span class="w-2 h-2 rounded-full bg-${project.color}-500"></span>${escapeHtml(project.name)}` : `<span class="w-2 h-2 rounded-full bg-gray-500"></span>None`;
             document.getElementById('sidebarTags').innerHTML = (doc.tags || []).map(t => `<span class="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-sm">#${escapeHtml(t)}</span>`).join('');
             document.getElementById('sidebarDate').textContent = new Date(doc.createdAt).toLocaleString();
@@ -968,23 +1229,18 @@
             updateZoomUI();
 
             try {
-                // PDF
                 if (doc.fileType === 'application/pdf' || doc.fileName.toLowerCase().endsWith('.pdf')) {
                     await renderPDF(doc, signal);
                 }
-                // Excel / CSV
                 else if (doc.fileType?.includes('excel') || doc.fileType?.includes('sheet') || doc.fileName.match(/\.(xlsx|xls|csv)$/i)) {
                     await renderExcel(doc, signal);
                 }
-                // Word .docx
                 else if (doc.fileType?.includes('word') || doc.fileName.toLowerCase().endsWith('.docx')) {
                     await renderWord(doc, signal);
                 }
-                // Images
                 else if (doc.fileType?.startsWith('image/')) {
                     renderImage(doc);
                 }
-                // Text / code
                 else if (doc.fileType?.includes('text') || doc.fileName.match(/\.(txt|json|js|css|html|md)$/i)) {
                     renderText(doc);
                 }
@@ -1028,7 +1284,7 @@
                     pdfViewer.appendChild(canvas);
                 }
             }, 50);
-            pdfDoc = pdf;
+            window.pdfDoc = pdf;
         }
 
         async function renderExcel(doc, signal) {
@@ -1085,9 +1341,8 @@
         function renderImage(doc) {
             const container = document.getElementById('viewerContent');
             container.innerHTML = `<div class="image-container zoomable-content" id="imageContainer">
-                <img src="${doc.fileData}" loading="lazy" style="transform:scale(${currentZoom}); max-height:85vh; max-width:90%;" class="object-contain rounded-lg shadow-2xl" id="viewerMedia" draggable="false">
+                <img src="${doc.fileData}" loading="lazy" style="transform:scale(${window.currentZoom}); max-height:85vh; max-width:90%;" class="object-contain rounded-lg shadow-2xl" id="viewerMedia" draggable="false">
             </div>`;
-            // simple pan (optional)
         }
 
         function renderText(doc) {
@@ -1100,7 +1355,7 @@
                         </div>
                         <pre class="p-6 text-gray-300 font-mono text-sm whitespace-pre-wrap overflow-auto custom-scrollbar" style="max-height:70vh;">${escapeHtml(txt)}</pre>
                     </div>`;
-            } catch { container.innerHTML = fallbackDownload(doc); }
+            } catch { fallbackDownload(doc); }
         }
 
         function fallbackDownload(doc, msg = '') {
@@ -1112,31 +1367,31 @@
             </div>`;
         }
 
-        function closeViewer() {
-            if (previewAbortController) previewAbortController.abort();
-            previewAbortController = null;
+        window.closeViewer = function() {
+            if (window.previewAbortController) window.previewAbortController.abort();
+            window.previewAbortController = null;
             document.getElementById('viewerPage').classList.add('hidden');
-            if (currentProjectId) document.getElementById('projectDetailPage').classList.remove('hidden');
+            if (window.currentProjectId) document.getElementById('projectDetailPage').classList.remove('hidden');
             else document.getElementById('dashboardPage').classList.remove('hidden');
-            currentDoc = null; pdfDoc = null; pdfPages = [];
-        }
+            window.currentDoc = null; window.pdfDoc = null; window.pdfPages = [];
+        };
 
         // ---------- ZOOM (debounced) ----------
         let zoomTimer;
-        function adjustZoom(delta) {
+        window.adjustZoom = function(delta) {
             clearTimeout(zoomTimer);
             zoomTimer = setTimeout(async () => {
-                currentZoom = Math.max(0.5, Math.min(3, currentZoom + delta));
+                window.currentZoom = Math.max(0.5, Math.min(3, window.currentZoom + delta));
                 updateZoomUI();
-                if (pdfDoc) {
+                if (window.pdfDoc) {
                     const pdfViewer = document.getElementById('pdfViewer');
                     if (pdfViewer) {
                         pdfViewer.innerHTML = '<div class="pdf-loading text-white p-4">Rendering...</div>';
-                        for (let i = 1; i <= pdfDoc.numPages; i++) {
-                            const page = await pdfDoc.getPage(i);
+                        for (let i = 1; i <= window.pdfDoc.numPages; i++) {
+                            const page = await window.pdfDoc.getPage(i);
                             const canvas = document.createElement('canvas');
                             canvas.className = 'pdf-page';
-                            const vp = page.getViewport({ scale: 1.5 * currentZoom });
+                            const vp = page.getViewport({ scale: 1.5 * window.currentZoom });
                             canvas.height = vp.height; canvas.width = vp.width;
                             await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
                             if (i === 1) pdfViewer.innerHTML = '';
@@ -1145,340 +1400,83 @@
                     }
                 } else {
                     const el = document.querySelector('#viewerContent > .zoomable-content');
-                    if (el) el.style.transform = `scale(${currentZoom})`;
+                    if (el) el.style.transform = `scale(${window.currentZoom})`;
                 }
             }, 50);
-        }
-        function resetZoom() { currentZoom = 1; updateZoomUI(); adjustZoom(0); }
+        };
+        window.resetZoom = function() { window.currentZoom = 1; updateZoomUI(); adjustZoom(0); };
         function updateZoomUI() {
-            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
-            const f = document.getElementById('floatingZoomLevel'); if (f) f.textContent = Math.round(currentZoom * 100) + '%';
-        }
-
-        // ---------- PROJECT RENDERING ----------
-        function renderProjectsSection(projects) {
-            const container = document.getElementById('projectsContainer');
-            const empty = document.getElementById('emptyProjectsState');
-            const roots = getHierarchy(projects);
-            if (projects.length === 0) { container.innerHTML = ''; container.classList.add('hidden'); empty.classList.remove('hidden'); return; }
-            container.classList.remove('hidden'); empty.classList.add('hidden');
-            container.innerHTML = roots.map(p => renderProjectFolder(p)).join('');
-        }
-        function getHierarchy(projects) {
-            const map = new Map(); projects.forEach(p => map.set(p.id, { ...p, children: [] }));
-            const roots = [];
-            projects.forEach(p => { if (p.parentId && map.has(p.parentId)) map.get(p.parentId).children.push(map.get(p.id)); else roots.push(map.get(p.id)); });
-            return roots;
-        }
-        function renderProjectFolder(p, isSub = false) {
-            return `<div class="${isSub ? 'sub-project' : ''}">
-                <div class="main-project" onclick="openProjectDetail(${p.id})">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="w-12 h-12 rounded-lg bg-${p.color}-100 dark:bg-${p.color}-900/30 flex items-center justify-center">
-                            <i class="fas fa-folder text-2xl text-${p.color}-600"></i>
-                        </div>
-                        ${p.children.length ? `<span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full">${p.children.length} sub</span>` : ''}
-                    </div>
-                    <h3 class="font-semibold text-gray-900 dark:text-white mb-1 truncate">${escapeHtml(p.name)}</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-2 h-10">${escapeHtml(p.description || 'No description')}</p>
-                    <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-700">
-                        <span><i class="fas fa-file"></i> 0 files</span>
-                        <span>${formatDate(p.createdAt)}</span>
-                    </div>
-                </div>
-                ${p.children.length ? p.children.map(c => renderProjectFolder(c, true)).join('') : ''}
-            </div>`;
-        }
-        function populateProjectSelect(projects) {
-            const sel = document.getElementById('uploadProject');
-            const roots = getHierarchy(projects);
-            let opts = '<option value="">No Project</option>';
-            function walk(list, lvl = 0) {
-                list.forEach(p => {
-                    opts += `<option value="${p.id}">${'— '.repeat(lvl)}${escapeHtml(p.name)}</option>`;
-                    if (p.children.length) walk(p.children, lvl + 1);
-                });
-            }
-            walk(roots);
-            sel.innerHTML = opts;
-        }
-
-        // ---------- PROJECT DETAIL ----------
-        async function openProjectDetail(id) {
-            currentProjectId = id;
-            const p = projectsCache.find(x => x.id === id);
-            if (!p) return;
-            document.getElementById('dashboardPage').classList.add('hidden');
-            document.getElementById('projectDetailPage').classList.remove('hidden');
-            document.getElementById('projectDetailTitle').textContent = p.name;
-            document.getElementById('projectDetailPath').textContent = getProjectPath(id);
-            document.getElementById('projectDetailIcon').className = `w-10 h-10 rounded-xl flex items-center justify-center shadow-lg bg-${p.color}-500`;
-            const lvl = getProjectLevel(id);
-            document.getElementById('addSubProjectBtn').style.display = lvl >= 2 ? 'none' : 'flex';
-            await loadProjectSubProjects(id);
-            await loadProjectDocuments(id);
-        }
-        function closeProjectDetail() { currentProjectId = null; document.getElementById('projectDetailPage').classList.add('hidden'); document.getElementById('dashboardPage').classList.remove('hidden'); loadDocuments(); }
-        function getProjectPath(id) {
-            let path = [], cur = projectsCache.find(x => x.id === id);
-            while (cur) { path.unshift(cur.name); cur = projectsCache.find(x => x.id === cur.parentId); }
-            return path.join(' / ');
-        }
-        function getProjectLevel(id) {
-            let lvl = 0, cur = projectsCache.find(x => x.id === id);
-            while (cur && cur.parentId) { lvl++; cur = projectsCache.find(x => x.id === cur.parentId); }
-            return lvl;
-        }
-        async function loadProjectSubProjects(pid) {
-            const subs = projectsCache.filter(p => p.parentId === pid);
-            const container = document.getElementById('subProjectsContainer');
-            const section = document.getElementById('subProjectsSection');
-            if (subs.length === 0) { section.classList.add('hidden'); return; }
-            section.classList.remove('hidden');
-            container.innerHTML = subs.map(sp => `
-                <div class="folder-card bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 cursor-pointer hover:border-primary-400 dark:hover:border-primary-600" onclick="openProjectDetail(${sp.id})">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-${sp.color}-100 dark:bg-${sp.color}-900/30 flex items-center justify-center">
-                            <i class="fas fa-folder text-xl text-${sp.color}-600"></i>
-                        </div>
-                        <div class="min-w-0"><h4 class="font-medium text-gray-900 dark:text-white truncate">${escapeHtml(sp.name)}</h4><p class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(sp.description || '')}</p></div>
-                    </div>
-                </div>`).join('');
-        }
-
-        // ---------- DOCUMENT RENDERING ----------
-        function renderDocuments(docs) {
-            const container = document.getElementById('documentsContainer'), empty = document.getElementById('emptyState');
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            let filtered = docs.filter(d => !q || d.name.toLowerCase().includes(q) || (d.description && d.description.toLowerCase().includes(q)) || (d.tags && d.tags.some(t => t.toLowerCase().includes(q))));
-            filtered.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-            document.getElementById('docCount').textContent = filtered.length;
-            if (filtered.length === 0) { container.innerHTML = ''; container.classList.add('hidden'); empty.classList.remove('hidden'); return; }
-            container.classList.remove('hidden'); empty.classList.add('hidden');
-            if (viewMode === 'grid') {
-                container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
-                container.innerHTML = filtered.map(d => createDocCard(d)).join('');
-            } else {
-                container.innerHTML = createDocList(filtered);
-            }
-        }
-        function renderProjectDocuments(docs) {
-            const container = document.getElementById('projectDocumentsContainer'), empty = document.getElementById('emptyProjectDocsState');
-            if (docs.length === 0) { container.innerHTML = ''; container.classList.add('hidden'); empty.classList.remove('hidden'); return; }
-            container.classList.remove('hidden'); empty.classList.add('hidden');
-            if (projectViewMode === 'grid') {
-                container.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
-                container.innerHTML = docs.map(d => createDocCard(d)).join('');
-            } else {
-                container.innerHTML = createDocList(docs);
-            }
-        }
-        function createDocCard(d) {
-            const icon = getFileIcon(d.fileType), col = getFileColor(d.fileType);
-            const proj = projectsCache.find(p => p.id == d.projectId);
-            return `<div class="file-card bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 relative group cursor-pointer theme-transition" onclick="viewDocument(${d.id})">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 flex items-center justify-center">
-                        <i class="${icon} ${col} text-2xl"></i>
-                    </div>
-                    <button onclick="event.stopPropagation(); showDeleteModal(${d.id})" class="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-600 rounded-lg transition-colors opacity-0 group-hover:opacity-100"><i class="fas fa-trash-alt"></i></button>
-                </div>
-                <h3 class="font-semibold text-gray-900 dark:text-white mb-1 truncate" title="${escapeHtml(d.name)}">${escapeHtml(d.name)}</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 h-10">${escapeHtml(d.description || 'No description')}</p>
-                ${proj ? `<div class="flex items-center gap-2 mb-3"><span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-${proj.color}-500"></span>${escapeHtml(proj.name)}</span></div>` : ''}
-                <div class="flex flex-wrap gap-1 mb-4">${(d.tags || []).map(t => `<span class="px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded-full">#${escapeHtml(t)}</span>`).join('')}</div>
-                <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-700">
-                    <span><i class="far fa-clock"></i>${formatDate(d.createdAt)}</span>
-                    <span>${formatSize(d.fileSize)}</span>
-                </div>
-            </div>`;
-        }
-        function createDocList(docs) {
-            return `<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-                <table class="w-full"><thead class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                    <tr><th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">Name</th>
-                    <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3 hidden md:table-cell">Project</th>
-                    <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3 hidden sm:table-cell">Tags</th>
-                    <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3">Size</th>
-                    <th class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider px-6 py-3 hidden lg:table-cell">Date</th>
-                    <th class="px-6 py-3 w-10"></th></tr>
-                </thead><tbody class="divide-y divide-gray-200 dark:divide-gray-700">` +
-                docs.map(d => {
-                    const icon = getFileIcon(d.fileType), col = getFileColor(d.fileType);
-                    const proj = projectsCache.find(p => p.id == d.projectId);
-                    return `<tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group" onclick="viewDocument(${d.id})">
-                        <td class="px-6 py-4"><div class="flex items-center gap-3"><i class="${icon} ${col} text-lg"></i><div><p class="font-medium text-gray-900 dark:text-white">${escapeHtml(d.name)}</p><p class="text-sm text-gray-500 dark:text-gray-400 md:hidden">${escapeHtml(d.description?.substring(0,50) || '')}...</p></div></div></td>
-                        <td class="px-6 py-4 hidden md:table-cell">${proj ? `<span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-${proj.color}-500"></span>${escapeHtml(proj.name)}</span>` : '-'}</td>
-                        <td class="px-6 py-4 hidden sm:table-cell"><div class="flex gap-1 flex-wrap">${(d.tags || []).slice(0,2).map(t=>`<span class="px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded-full">${escapeHtml(t)}</span>`).join('')}${d.tags?.length>2?`<span class="text-xs text-gray-400 dark:text-gray-500">+${d.tags.length-2}</span>`:''}</div></td>
-                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">${formatSize(d.fileSize)}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">${formatDate(d.createdAt)}</td>
-                        <td class="px-6 py-4"><button onclick="event.stopPropagation(); showDeleteModal(${d.id})" class="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-600 rounded-lg transition-colors opacity-0 group-hover:opacity-100"><i class="fas fa-trash-alt"></i></button></td>
-                    </tr>`;
-                }).join('') + `</tbody></table></div>`;
-        }
-        function getFileIcon(t) {
-            if (!t) return 'fas fa-file';
-            if (t.includes('pdf')) return 'fas fa-file-pdf';
-            if (t.includes('image')) return 'fas fa-file-image';
-            if (t.includes('word') || t.includes('officedocument.word')) return 'fas fa-file-word';
-            if (t.includes('excel') || t.includes('sheet') || t.includes('csv')) return 'fas fa-file-excel';
-            if (t.includes('powerpoint')) return 'fas fa-file-powerpoint';
-            if (t.includes('text') || t.includes('plain')) return 'fas fa-file-alt';
-            if (t.includes('video')) return 'fas fa-file-video';
-            if (t.includes('audio')) return 'fas fa-file-audio';
-            if (t.includes('zip') || t.includes('compressed')) return 'fas fa-file-archive';
-            return 'fas fa-file';
-        }
-        function getFileColor(t) {
-            if (!t) return 'text-gray-400';
-            if (t.includes('pdf')) return 'text-red-500';
-            if (t.includes('image')) return 'text-purple-500';
-            if (t.includes('word')) return 'text-blue-500';
-            if (t.includes('excel')||t.includes('sheet')||t.includes('csv')) return 'text-green-500';
-            if (t.includes('powerpoint')) return 'text-orange-500';
-            if (t.includes('text')||t.includes('plain')) return 'text-gray-500';
-            if (t.includes('video')) return 'text-red-400';
-            if (t.includes('audio')) return 'text-yellow-500';
-            if (t.includes('zip')||t.includes('compressed')) return 'text-yellow-600';
-            return 'text-gray-400';
-        }
-
-        // ---------- SEARCH / VIEW MODE ----------
-        function handleSearch() {
-            document.getElementById('clearSearchBtn').classList.toggle('hidden', !document.getElementById('searchInput').value);
-            if (currentProjectId) loadProjectDocuments(currentProjectId); else loadDocuments();
-        }
-        function clearSearch() { document.getElementById('searchInput').value = ''; handleSearch(); }
-        function setViewMode(m) { viewMode = m; document.getElementById('viewGrid').className = `p-2 rounded-md transition-colors ${m==='grid'?'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white':'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`;
-            document.getElementById('viewList').className = `p-2 rounded-md transition-colors ${m==='list'?'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white':'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`; loadDocuments(); }
-        function setProjectViewMode(m) { projectViewMode = m; document.getElementById('projectViewGrid').className = `p-2 rounded-md transition-colors ${m==='grid'?'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white':'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`;
-            document.getElementById('projectViewList').className = `p-2 rounded-md transition-colors ${m==='list'?'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white':'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`; if (currentProjectId) loadProjectDocuments(currentProjectId); }
-        function toggleSection(id, header) {
-            const s = document.getElementById(id), icon = header.querySelector('.section-icon');
-            if (s.classList.contains('collapsed')) { s.classList.remove('collapsed'); s.style.maxHeight = s.scrollHeight + 'px'; icon.style.transform = 'rotate(0deg)'; }
-            else { s.classList.add('collapsed'); s.style.maxHeight = '0'; icon.style.transform = 'rotate(-90deg)'; }
-        }
-
-        // ---------- UPLOAD ----------
-        function openUploadModal() {
-            document.getElementById('uploadModal').classList.remove('hidden');
-            selectedFiles = []; uploadTags = []; renderTags();
-            document.getElementById('fileInput').value = '';
-            document.getElementById('uploadProject').value = currentProjectId || '';
-            updateFileList();
-            document.getElementById('uploadSettings').classList.add('hidden');
-            document.getElementById('uploadSubmitBtn').disabled = true;
-        }
-        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); selectedFiles = []; }
-        function openUploadModalForProject() { openUploadModal(); if (currentProjectId) document.getElementById('uploadProject').value = currentProjectId; }
-        function handleFileSelect(i) {
-            const files = Array.from(i.files);
-            files.forEach(f => selectedFiles.push({ file: f, name: f.name.replace(/\.[^/.]+$/, ''), description: '' }));
-            updateFileList();
-        }
-        function updateFileList() {
-            const container = document.getElementById('filesContainer'), list = document.getElementById('selectedFilesList'), settings = document.getElementById('uploadSettings'), btn = document.getElementById('uploadSubmitBtn');
-            document.getElementById('fileCount').textContent = selectedFiles.length;
-            document.getElementById('uploadCountText').textContent = `${selectedFiles.length} file(s) selected`;
-            if (selectedFiles.length === 0) { list.classList.add('hidden'); settings.classList.add('hidden'); btn.disabled = true; return; }
-            list.classList.remove('hidden'); settings.classList.remove('hidden'); btn.disabled = false;
-            container.innerHTML = selectedFiles.map((item, idx) => `<div class="file-list-item">
-                <i class="${getFileIcon(item.file.type)} ${getFileColor(item.file.type)} text-xl flex-shrink-0"></i>
-                <div class="flex-1 min-w-0"><input type="text" value="${escapeHtml(item.name)}" onchange="updateFileName(${idx}, this.value)" placeholder="File name" class="w-full mb-1"><input type="text" value="${escapeHtml(item.description)}" onchange="updateFileDescription(${idx}, this.value)" placeholder="Description (optional)" class="w-full text-sm text-gray-600 dark:text-gray-400"></div>
-                <span class="text-xs text-gray-500 flex-shrink-0">${formatSize(item.file.size)}</span>
-                <button onclick="removeFile(${idx})" class="remove-file-btn flex-shrink-0"><i class="fas fa-times"></i></button>
-            </div>`).join('');
-        }
-        function updateFileName(i, v) { selectedFiles[i].name = v; }
-        function updateFileDescription(i, v) { selectedFiles[i].description = v; }
-        function removeFile(i) { selectedFiles.splice(i,1); updateFileList(); }
-        function handleTagInput(e) {
-            if (e.key === 'Enter') { e.preventDefault(); const val = e.target.value.trim(); if (val && !uploadTags.includes(val)) { uploadTags.push(val); renderTags(); e.target.value = ''; } }
-            else if (e.key === 'Backspace' && !e.target.value && uploadTags.length) { uploadTags.pop(); renderTags(); }
-        }
-        function renderTags() {
-            document.getElementById('tagContainer').innerHTML = uploadTags.map((t,i)=>`<span class="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded-md flex items-center gap-1">${escapeHtml(t)}<button onclick="removeTag(${i})" class="hover:text-primary-900 dark:hover:text-primary-300"><i class="fas fa-times"></i></button></span>`).join('');
-        }
-        function removeTag(i) { uploadTags.splice(i,1); renderTags(); }
-        function readFileAsBase64(f) { return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); }); }
-        async function handleMultipleUpload() {
-            if (!selectedFiles.length) return;
-            const btn = document.getElementById('uploadSubmitBtn'), orig = btn.innerHTML;
-            btn.innerHTML = '<div class="loader"></div> Uploading...'; btn.disabled = true;
-            const pid = document.getElementById('uploadProject').value ? parseInt(document.getElementById('uploadProject').value) : null;
-            try {
-                for (let it of selectedFiles) {
-                    const b64 = await readFileAsBase64(it.file);
-                    await new Promise((res,rej) => {
-                        const tx = db.transaction(['documents'], 'readwrite');
-                        tx.objectStore('documents').add({
-                            userId: currentUser.email, name: it.name || it.file.name, description: it.description,
-                            fileData: b64, fileType: it.file.type, fileName: it.file.name, fileSize: it.file.size,
-                            projectId: pid, tags: uploadTags, createdAt: new Date().toISOString()
-                        }).onsuccess = res; tx.onerror = rej;
-                    });
-                }
-                closeUploadModal();
-                if (currentProjectId) await loadProjectDocuments(currentProjectId); else await loadDocuments();
-                updateStorageInfo();
-            } catch (e) { console.error(e); alert('Upload failed.'); } finally { btn.innerHTML = orig; btn.disabled = false; }
-        }
-
-        // ---------- PROJECT CREATE ----------
-        function openProjectModal() {
-            document.getElementById('projectModalTitle').textContent = 'New Project';
-            document.getElementById('parentProjectId').value = '';
-            document.getElementById('projectModal').classList.remove('hidden');
-            document.getElementById('projectName').value = ''; document.getElementById('projectDescription').value = '';
-            selectProjectColor('blue');
-        }
-        function closeProjectModal() { document.getElementById('projectModal').classList.add('hidden'); }
-        function openSubProjectModal() {
-            document.getElementById('projectModalTitle').textContent = 'New Sub Project';
-            document.getElementById('parentProjectId').value = currentProjectId;
-            document.getElementById('projectName').value = ''; document.getElementById('projectDescription').value = '';
-            selectProjectColor('blue');
-            document.getElementById('projectModal').classList.remove('hidden');
-        }
-        function selectProjectColor(c) {
-            document.getElementById('projectColor').value = c;
-            document.querySelectorAll('.project-color-btn').forEach(b => {
-                if (b.dataset.color === c) { b.classList.add('ring-2','ring-offset-2'); b.classList.remove('hover:ring-2','hover:ring-offset-2'); }
-                else { b.classList.remove('ring-2','ring-offset-2'); b.classList.add('hover:ring-2','hover:ring-offset-2'); }
-            });
-        }
-        async function handleCreateProject(e) {
-            e.preventDefault();
-            const proj = {
-                userId: currentUser.email,
-                name: document.getElementById('projectName').value,
-                description: document.getElementById('projectDescription').value,
-                color: document.getElementById('projectColor').value,
-                parentId: document.getElementById('parentProjectId').value ? parseInt(document.getElementById('parentProjectId').value) : null,
-                createdAt: new Date().toISOString()
-            };
-            await new Promise((res,rej) => {
-                const tx = db.transaction(['projects'], 'readwrite');
-                tx.objectStore('projects').add(proj).onsuccess = res; tx.onerror = rej;
-            });
-            closeProjectModal();
-            await loadProjects();
-            if (currentProjectId) await loadProjectSubProjects(currentProjectId);
+            document.getElementById('zoomLevel').textContent = Math.round(window.currentZoom * 100) + '%';
+            const f = document.getElementById('floatingZoomLevel'); if (f) f.textContent = Math.round(window.currentZoom * 100) + '%';
         }
 
         // ---------- SIDEBAR TOGGLE ----------
-        function toggleSidebar() {
+        window.toggleSidebar = function() {
             const sb = document.getElementById('viewerSidebar'), icon = document.getElementById('sidebarToggleIcon');
-            sidebarVisible = !sidebarVisible;
-            if (sidebarVisible) { sb.classList.remove('hidden'); setTimeout(()=>{ sb.style.transform='translateX(0)'; },10); icon.className = 'fas fa-times'; }
-            else { sb.style.transform='translateX(100%)'; setTimeout(()=>{ sb.classList.add('hidden'); },300); icon.className = 'fas fa-info-circle'; }
-        }
+            window.sidebarVisible = !window.sidebarVisible;
+            if (window.sidebarVisible) {
+                sb.classList.remove('hidden');
+                setTimeout(()=>{ sb.style.transform='translateX(0)'; },10);
+                icon.className = 'fas fa-times';
+            } else {
+                sb.style.transform='translateX(100%)';
+                setTimeout(()=>{ sb.classList.add('hidden'); },300);
+                icon.className = 'fas fa-info-circle';
+            }
+        };
+
+        // ---------- DELETE (Firebase) ----------
+        window.showDeleteModal = function(id) { window.deleteTargetId = id; document.getElementById('deleteModal').classList.remove('hidden'); };
+        window.closeDeleteModal = function() { window.deleteTargetId = null; document.getElementById('deleteModal').classList.add('hidden'); };
+        window.confirmDelete = async function() {
+            if (!window.deleteTargetId || !window.currentUser) return;
+            showLoading();
+            try {
+                const docRef = doc(db, 'documents', window.deleteTargetId);
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists) throw new Error('Document not found');
+                const data = docSnap.data();
+                if (data.userId !== window.currentUser.uid) throw new Error('Permission denied');
+                // Delete from Storage
+                if (data.storagePath) {
+                    const fileRef = ref(storage, data.storagePath);
+                    await deleteObject(fileRef);
+                }
+                // Delete from Firestore
+                await deleteDoc(docRef);
+                closeDeleteModal();
+                showToast('🗑️ Document deleted');
+                updateStorageInfo();
+            } catch (error) {
+                showToast('Delete failed: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        };
 
         // ---------- DOWNLOAD ----------
-        function downloadCurrentFile() {
-            if (!currentDoc) return;
-            const a = document.createElement('a'); a.href = currentDoc.fileData; a.download = currentDoc.fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        }
+        window.downloadCurrentFile = function() {
+            if (!window.currentDoc) return;
+            const a = document.createElement('a'); a.href = window.currentDoc.fileData; a.download = window.currentDoc.fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        };
+
+        // ---------- THEME ----------
+        window.toggleTheme = function() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.getElementById('themeIcon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        };
+        window.setThemeColor = function(color) {
+            document.documentElement.setAttribute('data-theme', color);
+            localStorage.setItem('themeColor', color);
+        };
+        // Load saved theme
+        (function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+            const savedColor = localStorage.getItem('themeColor') || 'blue';
+            document.documentElement.setAttribute('data-theme', savedColor);
+        })();
 
         // ---------- UTILITIES ----------
         function formatSize(b) {
@@ -1499,12 +1497,11 @@
             const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
         }
         async function updateStorageInfo() {
-            if (!db || !currentUser) return;
-            const tx = db.transaction(['documents'], 'readonly');
-            tx.objectStore('documents').index('userId').getAll(currentUser.email).onsuccess = (e) => {
-                const total = (e.target.result || []).reduce((s,doc)=>s + (doc.fileSize||0),0);
-                document.getElementById('storageInfo').textContent = formatSize(total) + ' used';
-            };
+            if (!window.currentUser) return;
+            const q = query(collection(db, 'documents'), where('userId', '==', window.currentUser.uid));
+            const snap = await getDocs(q);
+            const total = snap.docs.reduce((s,doc) => s + (doc.data().fileSize || 0), 0);
+            document.getElementById('storageInfo').textContent = formatSize(total) + ' used';
         }
 
         // ---------- DROP ZONE ----------
@@ -1516,7 +1513,7 @@
             dropZone.addEventListener('drop', e => {
                 const files = e.dataTransfer.files;
                 if (files.length) {
-                    Array.from(files).forEach(f => selectedFiles.push({ file: f, name: f.name.replace(/\.[^/.]+$/, ''), description: '' }));
+                    Array.from(files).forEach(f => window.selectedFiles.push({ file: f, name: f.name.replace(/\.[^/.]+$/, ''), description: '' }));
                     updateFileList();
                 }
             });
@@ -1542,23 +1539,7 @@
             }
         });
 
-        // ---------- INITIALISE APP ----------
-        window.addEventListener('load', async () => {
-            try {
-                await initDB();
-                await loadTheme();
-                const saved = localStorage.getItem('currentUser');
-                if (saved) { currentUser = JSON.parse(saved); showDashboard(); }
-            } catch (e) { console.error(e); alert('Initialisation failed. Please refresh.'); }
-        });
-
-        // ---------- VISIBILITY CHANGE – refresh data ----------
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && currentUser) {
-                if (currentProjectId) loadProjectDocuments(currentProjectId); else loadDocuments();
-                updateStorageInfo();
-            }
-        });
+        console.log('🔥 Firebase app initialised with your config');
     </script>
 </body>
 </html>
