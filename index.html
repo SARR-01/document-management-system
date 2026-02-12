@@ -16,14 +16,13 @@
     <!-- Mammoth.js (Word) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <style>
-        /* ---------- GLOBAL STYLES (with smooth UI) ---------- */
+        /* ---------- GLOBAL STYLES (same as before, with smooth UI) ---------- */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         :root {
             --primary-50: #eff6ff; --primary-100: #dbeafe; --primary-200: #bfdbfe;
             --primary-300: #93c5fd; --primary-400: #60a5fa; --primary-500: #3b82f6;
             --primary-600: #2563eb; --primary-700: #1d4ed8; --primary-800: #1e40af; --primary-900: #1e3a8a;
         }
-        /* Theme colors */
         [data-theme="purple"] { --primary-50: #faf5ff; --primary-100: #f3e8ff; --primary-200: #e9d5ff; --primary-300: #d8b4fe; --primary-400: #c084fc; --primary-500: #a855f7; --primary-600: #9333ea; --primary-700: #7c3aed; --primary-800: #6b21a8; --primary-900: #581c87; }
         [data-theme="green"]  { --primary-50: #f0fdf4; --primary-100: #dcfce7; --primary-200: #bbf7d0; --primary-300: #86efac; --primary-400: #4ade80; --primary-500: #22c55e; --primary-600: #16a34a; --primary-700: #15803d; --primary-800: #166534; --primary-900: #14532d; }
         [data-theme="orange"] { --primary-50: #fff7ed; --primary-100: #ffedd5; --primary-200: #fed7aa; --primary-300: #fdba74; --primary-400: #fb923c; --primary-500: #f97316; --primary-600: #ea580c; --primary-700: #c2410c; --primary-800: #9a3412; --primary-900: #7c2d12; }
@@ -205,7 +204,7 @@
 
     <!-- ========== MAIN DASHBOARD ========== -->
     <div id="dashboardPage" class="hidden min-h-screen bg-gray-50 dark:bg-gray-900 theme-transition">
-        <!-- Header (exactly as before – keep your original header) -->
+        <!-- Header -->
         <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 shadow-sm theme-transition">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
@@ -560,7 +559,7 @@
         import { initializeApp } from 'firebase/app';
         import { getAnalytics } from 'firebase/analytics';
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-        import { getFirestore, collection, doc, addDoc, getDocs, getDoc, query, where, orderBy, deleteDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+        import { getFirestore, collection, doc, addDoc, getDocs, getDoc, query, where, deleteDoc, updateDoc, onSnapshot } from 'firebase/firestore';
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
         const firebaseConfig = {
@@ -706,14 +705,19 @@
             if (window.unsubscribeProjects) window.unsubscribeProjects();
             const projectsQuery = query(
                 collection(db, 'projects'),
-                where('userId', '==', window.currentUser.uid),
-                orderBy('createdAt', 'desc')
+                where('userId', '==', window.currentUser.uid)
+                // No orderBy to avoid index requirement; we'll sort client-side
             );
             window.unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
                 window.projectsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Sort client-side by createdAt descending
+                window.projectsCache.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 renderProjectsSection(window.projectsCache);
                 populateProjectSelect(window.projectsCache);
                 document.getElementById('projectsCount').textContent = window.projectsCache.length;
+            }, (error) => {
+                console.error('Projects listener error:', error);
+                showToast('Error loading projects: ' + error.message, 'error');
             });
 
             // Real‑time all documents
@@ -722,39 +726,47 @@
 
         window.showDashboard = showDashboard;
 
-        // ---------- DOCUMENTS (real‑time) ----------
+        // ---------- DOCUMENTS (real‑time, client‑side sort) ----------
         function loadDocuments() {
             if (!window.currentUser) return;
             if (window.unsubscribeDocuments) window.unsubscribeDocuments();
             const docsQuery = query(
                 collection(db, 'documents'),
-                where('userId', '==', window.currentUser.uid),
-                orderBy('createdAt', 'desc')
+                where('userId', '==', window.currentUser.uid)
             );
             window.unsubscribeDocuments = onSnapshot(docsQuery, (snapshot) => {
                 const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Sort client-side
+                docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 renderDocuments(docs);
                 document.getElementById('allDocsCount').textContent = docs.length;
                 updateStorageInfo();
+            }, (error) => {
+                console.error('Documents listener error:', error);
+                showToast('Error loading documents: ' + error.message, 'error');
             });
         }
 
-        // ---------- PROJECT DOCUMENTS (real‑time) ----------
+        // ---------- PROJECT DOCUMENTS (real‑time, client‑side sort) ----------
         function loadProjectDocuments(projectId) {
             if (!window.currentUser) return;
             if (window.unsubscribeProjectDocs) window.unsubscribeProjectDocs();
             const q = query(
                 collection(db, 'documents'),
                 where('userId', '==', window.currentUser.uid),
-                where('projectId', '==', projectId),
-                orderBy('createdAt', 'desc')
+                where('projectId', '==', projectId)
             );
             window.unsubscribeProjectDocs = onSnapshot(q, (snapshot) => {
                 let docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Sort client-side
+                docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
                 if (search) docs = docs.filter(d => d.name?.toLowerCase().includes(search) || (d.description && d.description.toLowerCase().includes(search)) || (d.tags && d.tags.some(t => t.toLowerCase().includes(search))));
                 renderProjectDocuments(docs);
                 document.getElementById('projectDocCount').textContent = docs.length;
+            }, (error) => {
+                console.error('Project documents listener error:', error);
+                showToast('Error loading project documents: ' + error.message, 'error');
             });
         }
 
@@ -879,7 +891,7 @@
             const container = document.getElementById('documentsContainer'), empty = document.getElementById('emptyState');
             const q = document.getElementById('searchInput').value.toLowerCase();
             let filtered = docs.filter(d => !q || d.name?.toLowerCase().includes(q) || (d.description && d.description.toLowerCase().includes(q)) || (d.tags && d.tags.some(t => t.toLowerCase().includes(q))));
-            filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            // Already sorted from listener
             document.getElementById('docCount').textContent = filtered.length;
             if (filtered.length === 0) {
                 container.innerHTML = '';
@@ -1081,18 +1093,24 @@
         }
         window.removeTag = function(i) { window.uploadTags.splice(i,1); renderTags(); };
         function readFileAsBase64(f) { return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); }); }
+
+        // 🔧 FIXED UPLOAD FUNCTION – always resets UI, proper error handling
         window.handleMultipleUpload = async function() {
             if (!window.selectedFiles.length) return;
-            const btn = document.getElementById('uploadSubmitBtn'), orig = btn.innerHTML;
-            btn.innerHTML = '<div class="loader"></div> Uploading...'; btn.disabled = true;
+            const btn = document.getElementById('uploadSubmitBtn');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<div class="loader"></div> Uploading...';
+            btn.disabled = true;
             const pid = document.getElementById('uploadProject').value || null;
             showLoading();
+
             try {
                 for (let it of window.selectedFiles) {
                     // Upload file to Storage
                     const fileRef = ref(storage, `users/${window.currentUser.uid}/documents/${Date.now()}_${it.file.name}`);
                     await uploadBytes(fileRef, it.file);
                     const downloadURL = await getDownloadURL(fileRef);
+
                     // Save metadata to Firestore
                     await addDoc(collection(db, 'documents'), {
                         userId: window.currentUser.uid,
@@ -1108,12 +1126,14 @@
                         createdAt: new Date().toISOString()
                     });
                 }
+
                 closeUploadModal();
                 showToast(`✅ ${window.selectedFiles.length} file(s) uploaded successfully`);
-                updateStorageInfo();
+                // Real‑time listeners will update UI automatically
             } catch (error) {
-                console.error(error);
+                console.error('Upload error:', error);
                 showToast('Upload failed: ' + error.message, 'error');
+                // Keep modal open so user can retry
             } finally {
                 hideLoading();
                 btn.innerHTML = orig;
@@ -1541,5 +1561,36 @@
 
         console.log('🔥 Firebase app initialised with your config');
     </script>
+
+    <!-- ========== FIREBASE RULES – COPY & PASTE INTO FIREBASE CONSOLE ========== -->
+    <!--
+        🔥 FIRESTORE RULES (go to Firestore Database → Rules):
+        rules_version = '2';
+        service cloud.firestore {
+          match /databases/{database}/documents {
+            match /users/{userId} {
+              allow read, write: if request.auth != null && request.auth.uid == userId;
+            }
+            match /projects/{projectId} {
+              allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+              allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+            }
+            match /documents/{docId} {
+              allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+              allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+            }
+          }
+        }
+
+        🔥 STORAGE RULES (go to Storage → Rules):
+        rules_version = '2';
+        service firebase.storage {
+          match /b/{bucket}/o {
+            match /users/{userId}/{allPaths=**} {
+              allow read, write: if request.auth != null && request.auth.uid == userId;
+            }
+          }
+        }
+    -->
 </body>
 </html>
