@@ -16,7 +16,7 @@
     <!-- Mammoth.js (Word) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <style>
-        /* ---------- GLOBAL STYLES (same as before, with smooth UI) ---------- */
+        /* ---------- GLOBAL STYLES (improved dark mode contrast) ---------- */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         :root {
             --primary-50: #eff6ff; --primary-100: #dbeafe; --primary-200: #bfdbfe;
@@ -38,6 +38,34 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* ===== FIXED DARK MODE STYLES ===== */
+        .dark .file-card,
+        .dark .folder-card,
+        .dark .main-project {
+            background-color: #1f2937;   /* gray-800 */
+            border-color: #374151;        /* gray-700 */
+        }
+        .dark .section-header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-color: #334155;
+        }
+        .dark input,
+        .dark textarea,
+        .dark select {
+            background-color: #1f2937;
+            border-color: #4b5563;
+            color: #f3f4f6;
+        }
+        .dark .toast {
+            background: #1f2937;
+            color: #f3f4f6;
+            border-left-color: var(--primary-400);
+        }
+        .dark .empty-state-icon {
+            background: linear-gradient(135deg, var(--primary-900), var(--primary-800));
+        }
+        /* End dark mode additions */
 
         .file-card, .folder-card, .main-project, .subproject-item, .zoom-btn, .back-to-projects-btn {
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -701,17 +729,20 @@
             document.getElementById('projectDetailPage').classList.add('hidden');
             document.getElementById('userEmail').textContent = window.currentUser.email;
 
-            // Real‑time projects
+            // Real‑time projects (with sorting fix)
             if (window.unsubscribeProjects) window.unsubscribeProjects();
             const projectsQuery = query(
                 collection(db, 'projects'),
                 where('userId', '==', window.currentUser.uid)
-                // No orderBy to avoid index requirement; we'll sort client-side
             );
             window.unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
                 window.projectsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Sort client-side by createdAt descending
-                window.projectsCache.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                // Sort client‑side by createdAt descending (handle missing dates)
+                window.projectsCache.sort((a, b) => {
+                    const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+                    const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+                    return dateB - dateA;
+                });
                 renderProjectsSection(window.projectsCache);
                 populateProjectSelect(window.projectsCache);
                 document.getElementById('projectsCount').textContent = window.projectsCache.length;
@@ -736,7 +767,6 @@
             );
             window.unsubscribeDocuments = onSnapshot(docsQuery, (snapshot) => {
                 const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Sort client-side
                 docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 renderDocuments(docs);
                 document.getElementById('allDocsCount').textContent = docs.length;
@@ -758,7 +788,6 @@
             );
             window.unsubscribeProjectDocs = onSnapshot(q, (snapshot) => {
                 let docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Sort client-side
                 docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
                 if (search) docs = docs.filter(d => d.name?.toLowerCase().includes(search) || (d.description && d.description.toLowerCase().includes(search)) || (d.tags && d.tags.some(t => t.toLowerCase().includes(search))));
@@ -770,7 +799,7 @@
             });
         }
 
-        // ---------- PROJECT RENDERING ----------
+        // ---------- PROJECT RENDERING (unchanged) ----------
         function renderProjectsSection(projects) {
             const container = document.getElementById('projectsContainer');
             const empty = document.getElementById('emptyProjectsState');
@@ -834,7 +863,7 @@
             sel.innerHTML = opts;
         }
 
-        // ---------- PROJECT DETAIL ----------
+        // ---------- PROJECT DETAIL (unchanged) ----------
         window.openProjectDetail = async function(id) {
             window.currentProjectId = id;
             const p = window.projectsCache.find(x => x.id === id);
@@ -886,12 +915,11 @@
                 </div>`).join('');
         }
 
-        // ---------- DOCUMENT RENDERING ----------
+        // ---------- DOCUMENT RENDERING (unchanged) ----------
         function renderDocuments(docs) {
             const container = document.getElementById('documentsContainer'), empty = document.getElementById('emptyState');
             const q = document.getElementById('searchInput').value.toLowerCase();
             let filtered = docs.filter(d => !q || d.name?.toLowerCase().includes(q) || (d.description && d.description.toLowerCase().includes(q)) || (d.tags && d.tags.some(t => t.toLowerCase().includes(q))));
-            // Already sorted from listener
             document.getElementById('docCount').textContent = filtered.length;
             if (filtered.length === 0) {
                 container.innerHTML = '';
@@ -1032,7 +1060,7 @@
             }
         };
 
-        // ---------- UPLOAD (Firebase Storage + Firestore) ----------
+        // ---------- UPLOAD (unchanged) ----------
         window.openUploadModal = function() {
             document.getElementById('uploadModal').classList.remove('hidden');
             window.selectedFiles = [];
@@ -1092,7 +1120,6 @@
             document.getElementById('tagContainer').innerHTML = window.uploadTags.map((t,i)=>`<span class="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 text-xs rounded-md flex items-center gap-1">${escapeHtml(t)}<button onclick="removeTag(${i})" class="hover:text-primary-900 dark:hover:text-primary-300"><i class="fas fa-times"></i></button></span>`).join('');
         }
         window.removeTag = function(i) { window.uploadTags.splice(i,1); renderTags(); };
-        function readFileAsBase64(f) { return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); }); }
 
         // 🔧 FIXED UPLOAD FUNCTION – always resets UI, proper error handling
         window.handleMultipleUpload = async function() {
@@ -1141,7 +1168,7 @@
             }
         };
 
-        // ---------- PROJECT CREATE ----------
+        // ---------- PROJECT CREATE (unchanged) ----------
         window.openProjectModal = function() {
             document.getElementById('projectModalTitle').textContent = 'New Project';
             document.getElementById('parentProjectId').value = '';
@@ -1193,7 +1220,7 @@
             }
         };
 
-        // ---------- VIEW DOCUMENT ----------
+        // ---------- FIXED VIEW DOCUMENT (using blob and objectURL) ----------
         window.viewDocument = async function(id) {
             const docRef = doc(db, 'documents', id);
             const docSnap = await getDoc(docRef);
@@ -1201,27 +1228,29 @@
             const doc = { id: docSnap.id, ...docSnap.data() };
             if (doc.userId !== window.currentUser.uid) return showToast('Access denied', 'error');
 
-            // Fetch file data via URL
             showLoading();
             try {
                 const response = await fetch(doc.fileURL);
                 const blob = await response.blob();
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    doc.fileData = e.target.result;
-                    window.currentDoc = doc;
-                    openViewerWithDoc(doc);
-                    hideLoading();
-                };
-                reader.readAsDataURL(blob);
+                // Store blob and a local object URL
+                doc.blob = blob;
+                doc.objectURL = URL.createObjectURL(blob);
+                window.currentDoc = doc;
+                openViewerWithDoc(doc);
             } catch (error) {
-                showToast('Failed to load document', 'error');
+                showToast('Failed to load document: ' + error.message, 'error');
+            } finally {
                 hideLoading();
             }
         };
 
-        // ---------- VIEWER ----------
+        // ---------- VIEWER (updated to use blob/objectURL) ----------
         function openViewerWithDoc(doc) {
+            // Clean up previous object URL if any
+            if (window.currentDoc && window.currentDoc.objectURL && window.currentDoc.objectURL !== doc.objectURL) {
+                URL.revokeObjectURL(window.currentDoc.objectURL);
+            }
+
             if (window.previewAbortController) window.previewAbortController.abort();
             window.previewAbortController = new AbortController();
             const signal = window.previewAbortController.signal;
@@ -1262,7 +1291,7 @@
                     renderImage(doc);
                 }
                 else if (doc.fileType?.includes('text') || doc.fileName.match(/\.(txt|json|js|css|html|md)$/i)) {
-                    renderText(doc);
+                    await renderText(doc, signal);
                 }
                 else {
                     container.innerHTML = fallbackDownload(doc);
@@ -1277,9 +1306,8 @@
 
         async function renderPDF(doc, signal) {
             const container = document.getElementById('viewerContent');
-            const binary = atob(doc.fileData.split(',')[1]);
-            const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-            const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+            const arrayBuffer = await doc.blob.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
             if (signal?.aborted) throw new Error('AbortError');
             container.innerHTML = '<div id="pdfViewer" class="zoomable-content"></div>';
             const pdfViewer = document.getElementById('pdfViewer');
@@ -1309,11 +1337,10 @@
 
         async function renderExcel(doc, signal) {
             const container = document.getElementById('viewerContent');
-            const binary = atob(doc.fileData.split(',')[1]);
-            const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+            const arrayBuffer = await doc.blob.arrayBuffer();
             await new Promise(r => setTimeout(r, 10));
             if (signal?.aborted) throw new Error('AbortError');
-            const wb = XLSX.read(bytes, { type: 'array' });
+            const wb = XLSX.read(arrayBuffer, { type: 'array' });
             const wsname = wb.SheetNames[0];
             const ws = wb.Sheets[wsname];
             const data = XLSX.utils.sheet_to_json(ws, { header: 1 }).slice(0, 100);
@@ -1342,9 +1369,7 @@
 
         async function renderWord(doc, signal) {
             const container = document.getElementById('viewerContent');
-            const binary = atob(doc.fileData.split(',')[1]);
-            const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-            const arrayBuffer = bytes.buffer;
+            const arrayBuffer = await doc.blob.arrayBuffer();
             const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000));
             const result = await Promise.race([mammoth.convertToHtml({ arrayBuffer }), timeout]);
             if (signal?.aborted) throw new Error('AbortError');
@@ -1361,21 +1386,20 @@
         function renderImage(doc) {
             const container = document.getElementById('viewerContent');
             container.innerHTML = `<div class="image-container zoomable-content" id="imageContainer">
-                <img src="${doc.fileData}" loading="lazy" style="transform:scale(${window.currentZoom}); max-height:85vh; max-width:90%;" class="object-contain rounded-lg shadow-2xl" id="viewerMedia" draggable="false">
+                <img src="${doc.objectURL}" loading="lazy" style="transform:scale(${window.currentZoom}); max-height:85vh; max-width:90%;" class="object-contain rounded-lg shadow-2xl" id="viewerMedia" draggable="false">
             </div>`;
         }
 
-        function renderText(doc) {
-            try {
-                const txt = atob(doc.fileData.split(',')[1]);
-                document.getElementById('viewerContent').innerHTML = `
-                    <div class="w-full max-w-4xl bg-gray-800 rounded-lg shadow-2xl overflow-hidden zoomable-content">
-                        <div class="bg-gray-900 px-4 py-2 text-xs text-gray-400 border-b border-gray-700 flex items-center gap-2">
-                            <i class="fas fa-file-code"></i><span>${escapeHtml(doc.fileName)}</span>
-                        </div>
-                        <pre class="p-6 text-gray-300 font-mono text-sm whitespace-pre-wrap overflow-auto custom-scrollbar" style="max-height:70vh;">${escapeHtml(txt)}</pre>
-                    </div>`;
-            } catch { fallbackDownload(doc); }
+        async function renderText(doc, signal) {
+            const text = await doc.blob.text();
+            if (signal?.aborted) throw new Error('AbortError');
+            document.getElementById('viewerContent').innerHTML = `
+                <div class="w-full max-w-4xl bg-gray-800 rounded-lg shadow-2xl overflow-hidden zoomable-content">
+                    <div class="bg-gray-900 px-4 py-2 text-xs text-gray-400 border-b border-gray-700 flex items-center gap-2">
+                        <i class="fas fa-file-code"></i><span>${escapeHtml(doc.fileName)}</span>
+                    </div>
+                    <pre class="p-6 text-gray-300 font-mono text-sm whitespace-pre-wrap overflow-auto custom-scrollbar" style="max-height:70vh;">${escapeHtml(text)}</pre>
+                </div>`;
         }
 
         function fallbackDownload(doc, msg = '') {
@@ -1383,13 +1407,16 @@
                 <i class="fas fa-file text-6xl text-gray-600 mb-4"></i>
                 <h2 class="text-2xl font-bold mb-2">${escapeHtml(doc.fileName)}</h2>
                 <p class="text-gray-400 mb-2">Preview not available ${msg}</p>
-                <button onclick="downloadCurrentFile()" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-lg flex items-center gap-2 mx-auto"><i class="fas fa-download"></i> Download</button>
+                <a href="${doc.objectURL}" download="${doc.fileName}" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-lg flex items-center gap-2 mx-auto"><i class="fas fa-download"></i> Download</a>
             </div>`;
         }
 
         window.closeViewer = function() {
             if (window.previewAbortController) window.previewAbortController.abort();
             window.previewAbortController = null;
+            if (window.currentDoc && window.currentDoc.objectURL) {
+                URL.revokeObjectURL(window.currentDoc.objectURL);
+            }
             document.getElementById('viewerPage').classList.add('hidden');
             if (window.currentProjectId) document.getElementById('projectDetailPage').classList.remove('hidden');
             else document.getElementById('dashboardPage').classList.remove('hidden');
@@ -1445,7 +1472,7 @@
             }
         };
 
-        // ---------- DELETE (Firebase) ----------
+        // ---------- DELETE (unchanged) ----------
         window.showDeleteModal = function(id) { window.deleteTargetId = id; document.getElementById('deleteModal').classList.remove('hidden'); };
         window.closeDeleteModal = function() { window.deleteTargetId = null; document.getElementById('deleteModal').classList.add('hidden'); };
         window.confirmDelete = async function() {
@@ -1477,10 +1504,10 @@
         // ---------- DOWNLOAD ----------
         window.downloadCurrentFile = function() {
             if (!window.currentDoc) return;
-            const a = document.createElement('a'); a.href = window.currentDoc.fileData; a.download = window.currentDoc.fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            const a = document.createElement('a'); a.href = window.currentDoc.objectURL || window.currentDoc.fileData; a.download = window.currentDoc.fileName; document.body.appendChild(a); a.click(); document.body.removeChild(a);
         };
 
-        // ---------- THEME ----------
+        // ---------- THEME (unchanged) ----------
         window.toggleTheme = function() {
             const isDark = document.documentElement.classList.toggle('dark');
             document.getElementById('themeIcon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
