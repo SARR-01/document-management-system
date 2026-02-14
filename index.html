@@ -5,230 +5,201 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Vault · Professional Document Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         
-        :root {
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-            --primary-light: #60a5fa;
-        }
-        
-        [data-theme="purple"] { --primary: #a855f7; --primary-dark: #9333ea; --primary-light: #c084fc; }
-        [data-theme="green"] { --primary: #10b981; --primary-dark: #059669; --primary-light: #34d399; }
-        [data-theme="orange"] { --primary: #f97316; --primary-dark: #ea580c; --primary-light: #fb923c; }
-        [data-theme="pink"] { --primary: #ec4899; --primary-dark: #db2777; --primary-light: #f472b6; }
-        [data-theme="red"] { --primary: #ef4444; --primary-dark: #dc2626; --primary-light: #f87171; }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* PREMIUM LIGHT THEME */
+        /* ===== THEME COLORS (WORKING) ===== */
+        :root {
+            --primary: 59 130 246;
+            --primary-rgb: rgb(59, 130, 246);
+            --primary-hover: rgb(37, 99, 235);
+        }
+        
+        [data-theme="blue"] { --primary: 59 130 246; --primary-rgb: rgb(59, 130, 246); --primary-hover: rgb(37, 99, 235); }
+        [data-theme="purple"] { --primary: 168 85 247; --primary-rgb: rgb(168, 85, 247); --primary-hover: rgb(147, 51, 234); }
+        [data-theme="green"] { --primary: 16 185 129; --primary-rgb: rgb(16, 185, 129); --primary-hover: rgb(5, 150, 105); }
+        [data-theme="orange"] { --primary: 249 115 22; --primary-rgb: rgb(249, 115, 22); --primary-hover: rgb(234, 88, 12); }
+        [data-theme="pink"] { --primary: 236 72 153; --primary-rgb: rgb(236, 72, 153); --primary-hover: rgb(219, 39, 119); }
+        [data-theme="red"] { --primary: 239 68 68; --primary-rgb: rgb(239, 68, 68); --primary-hover: rgb(220, 38, 38); }
+
+        /* ===== LIGHT THEME ===== */
         body.light {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             color: #1e293b;
         }
+        
+        body.light .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        body.light .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+        
+        body.light .section-header {
+            background: rgba(var(--primary), 0.05);
+            border: 1px solid rgba(var(--primary), 0.1);
+        }
 
-        /* PREMIUM DARK THEME */
+        /* ===== DARK THEME ===== */
         body.dark {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: #f1f5f9;
         }
-
-        /* GLASSMORPHISM EFFECTS */
-        .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
-        }
-
-        .dark .glass {
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-        }
-
-        /* PREMIUM CARDS */
-        .card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-        }
-
-        .dark .card {
+        
+        body.dark .card {
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
             border: 1px solid #334155;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        body.dark .glass {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+        }
+        
+        body.dark .section-header {
+            background: rgba(var(--primary), 0.15);
+            border: 1px solid rgba(var(--primary), 0.2);
+        }
+        
+        body.dark input,
+        body.dark textarea,
+        body.dark select {
+            background: #1e293b;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+        
+        body.dark input::placeholder,
+        body.dark textarea::placeholder {
+            color: #64748b;
         }
 
+        /* ===== COMPONENTS ===== */
+        .card {
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, rgba(var(--primary), 0.5), rgba(var(--primary), 0.8));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .card:hover::before {
+            opacity: 1;
+        }
+        
         .card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+        
+        body.dark .card:hover {
+            box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+            border-color: rgba(var(--primary), 0.5);
         }
 
-        .dark .card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(var(--primary), 0.3);
+        .glass {
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
         }
 
-        /* PREMIUM BUTTONS */
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: var(--primary-rgb);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 12px;
             border: none;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(var(--primary), 0.3);
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(var(--primary), 0.3);
         }
-
+        
         .btn-primary:hover {
+            background: var(--primary-hover);
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(var(--primary), 0.4);
+            box-shadow: 0 8px 20px rgba(var(--primary), 0.4);
         }
-
+        
         .btn-primary:active {
             transform: translateY(0);
         }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-        /* PREMIUM INPUTS */
         input, textarea, select {
             background: white;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
             padding: 12px 16px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s;
             font-family: 'Inter', sans-serif;
+            width: 100%;
         }
-
-        .dark input, .dark textarea, .dark select {
-            background: #1e293b;
-            border-color: #334155;
-            color: #f1f5f9;
-        }
-
+        
         input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--primary-rgb);
             box-shadow: 0 0 0 4px rgba(var(--primary), 0.1);
         }
 
-        /* PREMIUM SECTIONS */
         .section-header {
-            background: linear-gradient(135deg, rgba(var(--primary), 0.08) 0%, rgba(var(--primary), 0.03) 100%);
-            border: 1px solid rgba(var(--primary), 0.1);
             border-radius: 16px;
             padding: 16px 24px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s;
             margin-bottom: 20px;
         }
-
-        .dark .section-header {
-            background: linear-gradient(135deg, rgba(var(--primary), 0.15) 0%, rgba(var(--primary), 0.08) 100%);
-            border-color: rgba(var(--primary), 0.2);
-        }
-
+        
         .section-header:hover {
             transform: translateX(4px);
-            box-shadow: 0 4px 12px rgba(var(--primary), 0.15);
         }
 
-        /* PREMIUM SCROLLBAR */
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { 
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
-
-        /* PREMIUM ANIMATIONS */
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .animate-fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        /* LOADING SPINNER */
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(var(--primary), 0.2);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* TOAST NOTIFICATIONS */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-left: 4px solid var(--primary);
-            border-radius: 12px;
-            padding: 16px 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            transform: translateX(400px);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 10000;
-            max-width: 400px;
-        }
-
-        .dark .toast {
-            background: #1e293b;
-            border-color: #334155;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        .toast.show { transform: translateX(0); }
-
-        /* EMPTY STATE */
         .empty-state {
             padding: 80px 20px;
             text-align: center;
             animation: fadeIn 0.5s;
         }
-
+        
         .empty-icon {
             width: 120px;
             height: 120px;
             margin: 0 auto 24px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            background: var(--primary-rgb);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -236,86 +207,69 @@
             box-shadow: 0 20px 60px rgba(var(--primary), 0.3);
         }
 
-        /* MODAL */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: white;
+            border-left: 4px solid var(--primary-rgb);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        body.dark .toast {
+            background: #1e293b;
+            border-color: rgba(var(--primary), 0.8);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(var(--primary), 0.2);
+            border-top-color: var(--primary-rgb);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .modal-backdrop {
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(8px);
         }
-
+        
         .modal-content {
             animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* PDF VIEWER */
-        .pdf-page {
-            background: white;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            margin-bottom: 24px;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        /* EXCEL VIEWER */
-        .excel-viewer {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        .excel-table {
-            border-collapse: collapse;
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            width: 100%;
-        }
-
-        .excel-table th {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 12px 16px;
-            font-weight: 600;
-            text-align: left;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .excel-table td {
-            padding: 10px 16px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .excel-table tr:hover td {
-            background: rgba(var(--primary), 0.05);
-        }
-
-        /* DROPZONE */
-        .dropzone {
-            border: 3px dashed #cbd5e1;
-            border-radius: 16px;
-            padding: 48px;
-            text-align: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(var(--primary), 0.02);
-        }
-
-        .dropzone:hover {
-            border-color: var(--primary);
-            background: rgba(var(--primary), 0.05);
-        }
-
-        .dropzone.dragover {
-            border-color: var(--primary);
-            background: rgba(var(--primary), 0.1);
-            transform: scale(1.02);
-        }
-
-        /* TAG INPUT */
         .tag {
-            background: linear-gradient(135deg, rgba(var(--primary), 0.1), rgba(var(--primary), 0.05));
+            background: rgba(var(--primary), 0.1);
             border: 1px solid rgba(var(--primary), 0.2);
-            color: var(--primary-dark);
+            color: var(--primary-rgb);
             padding: 6px 12px;
             border-radius: 8px;
             display: inline-flex;
@@ -325,22 +279,42 @@
             font-weight: 500;
         }
 
-        /* VIEWER */
-        .viewer-header {
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            backdrop-filter: blur(20px);
+        .dropzone {
+            border: 3px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 48px;
+            text-align: center;
+            transition: all 0.3s;
+            background: rgba(var(--primary), 0.02);
+        }
+        
+        .dropzone:hover {
+            border-color: var(--primary-rgb);
+            background: rgba(var(--primary), 0.05);
+        }
+        
+        .dropzone.dragover {
+            border-color: var(--primary-rgb);
+            background: rgba(var(--primary), 0.1);
+            transform: scale(1.02);
         }
 
-        .zoom-controls {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 50px;
-            padding: 8px 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        .pdf-page {
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
-        /* PROJECT COLORS */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { 
+            background: var(--primary-rgb);
+            border-radius: 10px;
+        }
+
+        /* Project Color Gradients */
         .project-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
         .project-purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
         .project-green { background: linear-gradient(135deg, #10b981, #059669); }
@@ -349,24 +323,14 @@
         .project-red { background: linear-gradient(135deg, #ef4444, #dc2626); }
         .project-yellow { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
-        /* FILE TYPE ICONS */
+        /* File Icons */
         .icon-pdf { color: #ef4444; }
         .icon-image { color: #a855f7; }
         .icon-word { color: #3b82f6; }
         .icon-excel { color: #10b981; }
         .icon-powerpoint { color: #f97316; }
         .icon-text { color: #64748b; }
-        .icon-video { color: #ef4444; }
-        .icon-audio { color: #f59e0b; }
-        .icon-archive { color: #f59e0b; }
         .icon-default { color: #94a3b8; }
-
-        /* RESPONSIVE */
-        @media (max-width: 768px) {
-            .card { border-radius: 12px; }
-            .section-header { border-radius: 12px; padding: 12px 16px; }
-            .empty-icon { width: 80px; height: 80px; }
-        }
     </style>
 </head>
 <body class="light">
@@ -376,15 +340,15 @@
 
     <!-- ========== LOGIN PAGE ========== -->
     <div id="loginPage" class="min-h-screen flex items-center justify-center p-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-        <div class="w-full max-w-md animate-slide-up">
+        <div class="w-full max-w-md" style="animation: slideUp 0.4s ease-out;">
             <div class="text-center mb-8">
                 <div class="inline-flex items-center justify-center w-24 h-24 rounded-3xl mb-6" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
                     <i class="fas fa-folder-open text-4xl" style="color: #667eea;"></i>
                 </div>
                 <h1 class="text-4xl font-bold text-white mb-3">Project Vault</h1>
-                <p class="text-white text-opacity-80 text-lg">Your Premium Document Manager</p>
+                <p class="text-white text-opacity-80 text-lg">Professional Document Manager</p>
             </div>
-            <div class="glass rounded-3xl p-8 shadow-2xl">
+            <div class="glass p-8 shadow-2xl">
                 <div class="flex gap-2 mb-6 p-1.5 bg-white bg-opacity-20 rounded-xl">
                     <button onclick="toggleAuthMode('login')" id="loginTab" class="flex-1 py-3 text-sm font-semibold rounded-lg transition-all bg-white text-purple-600 shadow-lg">Sign In</button>
                     <button onclick="toggleAuthMode('register')" id="registerTab" class="flex-1 py-3 text-sm font-semibold rounded-lg transition-all text-white hover:bg-white hover:bg-opacity-10">Sign Up</button>
@@ -392,12 +356,12 @@
                 <form id="authForm" onsubmit="handleAuth(event)" class="space-y-5">
                     <div>
                         <label class="block text-sm font-semibold text-white mb-2">Email Address</label>
-                        <input type="email" id="authEmail" required class="w-full px-4 py-3 bg-white bg-opacity-90 border-2 border-transparent rounded-xl focus:bg-white text-gray-900 placeholder-gray-500" placeholder="you@example.com">
+                        <input type="email" id="authEmail" required class="w-full px-4 py-3 bg-white border-0 rounded-xl text-gray-900 placeholder-gray-500" placeholder="you@example.com">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-white mb-2">Password</label>
                         <div class="relative">
-                            <input type="password" id="authPassword" required minlength="6" class="w-full px-4 py-3 pr-12 bg-white bg-opacity-90 border-2 border-transparent rounded-xl focus:bg-white text-gray-900 placeholder-gray-500" placeholder="••••••••">
+                            <input type="password" id="authPassword" required minlength="6" class="w-full px-4 py-3 pr-12 bg-white border-0 rounded-xl text-gray-900 placeholder-gray-500" placeholder="••••••••">
                             <button type="button" onclick="togglePasswordVisibility()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
                                 <i id="passwordToggle" class="fas fa-eye"></i>
                             </button>
@@ -418,36 +382,36 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-20">
                     <div class="flex items-center gap-4 cursor-pointer" onclick="showDashboard()">
-                        <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark));">
+                        <div id="headerIcon" class="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg" style="background: var(--primary-rgb);">
                             <i class="fas fa-folder text-white text-xl"></i>
                         </div>
                         <div>
                             <h1 class="text-xl font-bold">Project Vault</h1>
-                            <p class="text-xs opacity-70">Professional Document Manager</p>
+                            <p class="text-xs opacity-70">Document Manager</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="toggleTheme()" class="w-11 h-11 rounded-xl flex items-center justify-center glass hover:scale-110 transition-transform" title="Toggle Theme">
                             <i id="themeIcon" class="fas fa-moon text-lg"></i>
                         </button>
-                        <div class="relative group">
-                            <button class="w-11 h-11 rounded-xl flex items-center justify-center glass hover:scale-110 transition-transform" title="Theme Color">
-                                <i class="fas fa-palette text-lg" style="color: var(--primary);"></i>
+                        <div class="relative">
+                            <button onclick="toggleColorPicker()" class="w-11 h-11 rounded-xl flex items-center justify-center glass hover:scale-110 transition-transform" title="Theme Color">
+                                <i class="fas fa-palette text-lg" id="paletteIcon" style="color: var(--primary-rgb);"></i>
                             </button>
-                            <div class="absolute right-0 top-full mt-3 glass rounded-2xl p-4 shadow-2xl hidden group-hover:block w-64">
+                            <div id="colorPicker" class="hidden absolute right-0 top-full mt-3 glass rounded-2xl p-4 shadow-2xl w-64">
                                 <p class="text-xs font-bold uppercase tracking-wider opacity-60 mb-3">Choose Theme</p>
-                                <div class="grid grid-cols-4 gap-3">
-                                    <button onclick="setThemeColor('blue')" class="w-12 h-12 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #3b82f6, #2563eb);" title="Blue"></button>
-                                    <button onclick="setThemeColor('purple')" class="w-12 h-12 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #a855f7, #9333ea);" title="Purple"></button>
-                                    <button onclick="setThemeColor('green')" class="w-12 h-12 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #10b981, #059669);" title="Green"></button>
-                                    <button onclick="setThemeColor('orange')" class="w-12 h-12 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #f97316, #ea580c);" title="Orange"></button>
-                                    <button onclick="setThemeColor('pink')" class="w-12 h-12 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #ec4899, #db2777);" title="Pink"></button>
-                                    <button onclick="setThemeColor('red')" class="w-12 h-12 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #ef4444, #dc2626);" title="Red"></button>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <button onclick="setThemeColor('blue')" class="w-14 h-14 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #3b82f6, #2563eb);" title="Blue"></button>
+                                    <button onclick="setThemeColor('purple')" class="w-14 h-14 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #a855f7, #9333ea);" title="Purple"></button>
+                                    <button onclick="setThemeColor('green')" class="w-14 h-14 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #10b981, #059669);" title="Green"></button>
+                                    <button onclick="setThemeColor('orange')" class="w-14 h-14 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #f97316, #ea580c);" title="Orange"></button>
+                                    <button onclick="setThemeColor('pink')" class="w-14 h-14 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #ec4899, #db2777);" title="Pink"></button>
+                                    <button onclick="setThemeColor('red')" class="w-14 h-14 rounded-xl hover:scale-110 transition-transform shadow-lg" style="background: linear-gradient(135deg, #ef4444, #dc2626);" title="Red"></button>
                                 </div>
                             </div>
                         </div>
                         <div class="hidden md:flex items-center gap-2 glass px-4 py-2 rounded-xl">
-                            <i class="fas fa-database text-sm" style="color: var(--primary);"></i>
+                            <i class="fas fa-database text-sm" style="color: var(--primary-rgb);"></i>
                             <span id="storageInfo" class="text-sm font-semibold">0 MB</span>
                         </div>
                         <span id="userEmail" class="hidden md:block text-sm font-semibold max-w-[150px] truncate"></span>
@@ -464,7 +428,7 @@
             <div class="flex flex-col md:flex-row gap-4 mb-8">
                 <div class="flex-1 relative">
                     <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search documents by name, description, or tags..." class="w-full pl-14 pr-14 py-4 text-lg rounded-2xl">
+                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search documents..." class="w-full pl-14 pr-14 py-4 text-lg rounded-2xl">
                     <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
@@ -484,7 +448,7 @@
                 <div class="section-header" onclick="toggleSection('allDocsSection')">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-4">
-                            <i class="fas fa-folder-open text-2xl" style="color: var(--primary);"></i>
+                            <i class="fas fa-folder-open text-2xl" style="color: var(--primary-rgb);"></i>
                             <div>
                                 <h2 class="text-xl font-bold">All Documents</h2>
                                 <p class="text-sm opacity-70"><span id="docCount">0</span> documents</p>
@@ -492,10 +456,10 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <div class="flex items-center gap-2 glass rounded-xl p-1.5">
-                                <button onclick="setViewMode('grid'); event.stopPropagation();" id="viewGrid" class="w-10 h-10 rounded-lg flex items-center justify-center transition-all" style="background: var(--primary); color: white;">
+                                <button onclick="setViewMode('grid'); event.stopPropagation();" id="viewGrid" class="w-10 h-10 rounded-lg flex items-center justify-center transition-all" style="background: var(--primary-rgb); color: white;">
                                     <i class="fas fa-th-large"></i>
                                 </button>
-                                <button onclick="setViewMode('list'); event.stopPropagation();" id="viewList" class="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <button onclick="setViewMode('list'); event.stopPropagation();" id="viewList" class="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:bg-gray-100">
                                     <i class="fas fa-list"></i>
                                 </button>
                             </div>
@@ -503,7 +467,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="allDocsSection" class="transition-all duration-300" style="max-height: 5000px;">
+                <div id="allDocsSection" class="transition-all duration-300" style="max-height: 5000px; overflow: hidden;">
                     <div id="documentsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
                     <div id="emptyState" class="hidden empty-state">
                         <div class="empty-icon">
@@ -523,7 +487,7 @@
                 <div class="section-header" onclick="toggleSection('projectsSection')">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-4">
-                            <i class="fas fa-folder-tree text-2xl" style="color: var(--primary);"></i>
+                            <i class="fas fa-folder-tree text-2xl" style="color: var(--primary-rgb);"></i>
                             <div>
                                 <h2 class="text-xl font-bold">Projects</h2>
                                 <p class="text-sm opacity-70"><span id="projectsCount">0</span> projects</p>
@@ -532,14 +496,14 @@
                         <i class="fas fa-chevron-down transition-transform duration-300" id="projectsIcon"></i>
                     </div>
                 </div>
-                <div id="projectsSection" class="transition-all duration-300" style="max-height: 5000px;">
+                <div id="projectsSection" class="transition-all duration-300" style="max-height: 5000px; overflow: hidden;">
                     <div id="projectsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
                     <div id="emptyProjectsState" class="hidden empty-state">
                         <div class="empty-icon">
                             <i class="fas fa-folder text-5xl text-white"></i>
                         </div>
                         <h3 class="text-2xl font-bold mb-2">No projects yet</h3>
-                        <p class="text-lg opacity-70 mb-6">Create a project to organize your documents</p>
+                        <p class="text-lg opacity-70 mb-6">Create a project to organize documents</p>
                         <button onclick="openProjectModal()" class="btn-primary inline-flex items-center gap-2">
                             <i class="fas fa-plus"></i> Create Project
                         </button>
@@ -580,21 +544,21 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div id="subProjectsSection" class="mb-8 hidden">
                 <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fas fa-folder-tree" style="color: var(--primary);"></i> Sub Projects
+                    <i class="fas fa-folder-tree" style="color: var(--primary-rgb);"></i> Sub Projects
                 </h2>
                 <div id="subProjectsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
             </div>
             <div>
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-bold flex items-center gap-2">
-                        <i class="fas fa-files" style="color: var(--primary);"></i> Documents
+                        <i class="fas fa-files" style="color: var(--primary-rgb);"></i> Documents
                         <span class="glass px-3 py-1 rounded-lg text-sm" id="projectDocCount">0</span>
                     </h2>
                     <div class="flex items-center gap-2 glass rounded-xl p-1.5">
-                        <button onclick="setProjectViewMode('grid')" id="projectViewGrid" class="w-10 h-10 rounded-lg flex items-center justify-center transition-all" style="background: var(--primary); color: white;">
+                        <button onclick="setProjectViewMode('grid')" id="projectViewGrid" class="w-10 h-10 rounded-lg flex items-center justify-center transition-all" style="background: var(--primary-rgb); color: white;">
                             <i class="fas fa-th-large"></i>
                         </button>
-                        <button onclick="setProjectViewMode('list')" id="projectViewList" class="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <button onclick="setProjectViewMode('list')" id="projectViewList" class="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:bg-gray-100">
                             <i class="fas fa-list"></i>
                         </button>
                     </div>
@@ -604,7 +568,7 @@
                     <div class="empty-icon">
                         <i class="fas fa-folder-open text-5xl text-white"></i>
                     </div>
-                    <h3 class="text-2xl font-bold mb-2">No documents in this project</h3>
+                    <h3 class="text-2xl font-bold mb-2">No documents</h3>
                     <p class="text-lg opacity-70 mb-6">Upload documents to this project</p>
                     <button onclick="openUploadModalForProject()" class="btn-primary inline-flex items-center gap-2">
                         <i class="fas fa-cloud-upload-alt"></i> Upload Document
@@ -615,8 +579,8 @@
     </div>
 
     <!-- ========== DOCUMENT VIEWER ========== -->
-    <div id="viewerPage" class="hidden min-h-screen flex flex-col">
-        <div class="viewer-header px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div id="viewerPage" class="hidden min-h-screen flex flex-col" style="background: #1e293b;">
+        <div class="px-6 py-4 flex items-center justify-between sticky top-0 z-50" style="background: linear-gradient(135deg, #0f172a, #1e293b); backdrop-filter: blur(20px);">
             <div class="flex items-center gap-4">
                 <button onclick="closeViewer()" class="w-11 h-11 rounded-xl flex items-center justify-center glass hover:scale-110 transition-transform text-white">
                     <i class="fas fa-arrow-left text-lg"></i>
@@ -626,75 +590,47 @@
                     <p id="viewerMeta" class="text-sm text-gray-300 truncate"></p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <div class="hidden md:flex items-center gap-2 glass rounded-xl p-1.5">
-                    <button onclick="adjustZoom(-0.1)" class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-white hover:bg-opacity-10 text-white transition-all">
-                        <i class="fas fa-minus text-sm"></i>
-                    </button>
-                    <span id="zoomLevel" class="text-white text-sm font-mono w-14 text-center">100%</span>
-                    <button onclick="adjustZoom(0.1)" class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-white hover:bg-opacity-10 text-white transition-all">
-                        <i class="fas fa-plus text-sm"></i>
-                    </button>
-                    <button onclick="resetZoom()" class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-white hover:bg-opacity-10 text-white transition-all">
-                        <i class="fas fa-compress text-sm"></i>
-                    </button>
-                </div>
-                <button onclick="downloadCurrentFile()" class="btn-primary flex items-center gap-2">
-                    <i class="fas fa-download"></i><span class="hidden sm:inline">Download</span>
-                </button>
-            </div>
+            <button onclick="downloadCurrentFile()" class="btn-primary flex items-center gap-2">
+                <i class="fas fa-download"></i><span class="hidden sm:inline">Download</span>
+            </button>
         </div>
         <div class="flex-1 overflow-auto flex items-start justify-center p-8 bg-gray-900">
             <div id="viewerContent" class="w-full h-full flex items-start justify-center"></div>
-            <div class="zoom-controls fixed bottom-8 left-1/2 -translate-x-1/2 xl:hidden flex items-center gap-3">
-                <button onclick="adjustZoom(-0.1)" class="w-11 h-11 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-20 text-white transition-all">
-                    <i class="fas fa-minus"></i>
-                </button>
-                <span id="floatingZoomLevel" class="text-white font-mono text-sm w-16 text-center">100%</span>
-                <button onclick="adjustZoom(0.1)" class="w-11 h-11 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-20 text-white transition-all">
-                    <i class="fas fa-plus"></i>
-                </button>
-                <button onclick="resetZoom()" class="w-11 h-11 rounded-full flex items-center justify-center hover:bg-white hover:bg-opacity-20 text-white transition-all">
-                    <i class="fas fa-compress"></i>
-                </button>
-            </div>
         </div>
     </div>
 
     <!-- ========== UPLOAD MODAL ========== -->
     <div id="uploadModal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
         <div class="card w-full max-w-2xl modal-content max-h-[90vh] overflow-hidden flex flex-col">
-            <div class="p-6 border-b flex items-center justify-between">
+            <div class="p-6 flex items-center justify-between" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, var(--primary), var(--primary-dark));">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--primary-rgb);">
                         <i class="fas fa-cloud-upload-alt text-white text-xl"></i>
                     </div>
                     <div>
                         <h2 class="text-2xl font-bold">Upload Documents</h2>
-                        <p class="text-sm opacity-70" id="uploadCountText">Select files to upload</p>
+                        <p class="text-sm opacity-70" id="uploadCountText">Select files</p>
                     </div>
                 </div>
-                <button onclick="closeUploadModal()" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                <button onclick="closeUploadModal()" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-all">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
             <div class="flex-1 overflow-y-auto p-6">
                 <div id="dropZone" class="dropzone relative cursor-pointer mb-6">
                     <input type="file" id="fileInput" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileSelect(this)">
-                    <i class="fas fa-cloud-upload-alt text-5xl mb-4" style="color: var(--primary);"></i>
-                    <p class="text-lg font-semibold mb-1">Drop files here or click to browse</p>
+                    <i class="fas fa-cloud-upload-alt text-5xl mb-4" style="color: var(--primary-rgb);"></i>
+                    <p class="text-lg font-semibold mb-1">Drop files or click to browse</p>
                     <p class="text-sm opacity-70">PDF, Word, Excel, Images, and more</p>
                 </div>
                 <div id="selectedFilesList" class="hidden mb-6">
-                    <h3 class="text-sm font-bold mb-3">Selected Files (<span id="fileCount">0</span>)</h3>
+                    <h3 class="text-sm font-bold mb-3">Selected (<span id="fileCount">0</span>)</h3>
                     <div id="filesContainer" class="space-y-3 max-h-60 overflow-y-auto"></div>
                 </div>
                 <div id="uploadSettings" class="hidden space-y-4">
                     <div>
                         <label class="block text-sm font-semibold mb-2">Project</label>
-                        <select id="uploadProject" class="w-full">
-                            <option value="">No Project</option>
-                        </select>
+                        <select id="uploadProject"><option value="">No Project</option></select>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-2">Tags <span class="opacity-70 font-normal">(press Enter)</span></label>
@@ -705,9 +641,9 @@
                     </div>
                 </div>
             </div>
-            <div class="p-6 border-t flex gap-3">
+            <div class="p-6 flex gap-3" style="border-top: 1px solid rgba(0,0,0,0.05);">
                 <button onclick="closeUploadModal()" class="flex-1 px-6 py-3 rounded-xl font-semibold glass hover:scale-105 transition-transform">Cancel</button>
-                <button onclick="handleMultipleUpload()" id="uploadSubmitBtn" class="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <button onclick="handleMultipleUpload()" id="uploadSubmitBtn" class="flex-1 btn-primary flex items-center justify-center gap-2" disabled>
                     <span>Upload All</span><i class="fas fa-arrow-right"></i>
                 </button>
             </div>
@@ -717,9 +653,9 @@
     <!-- ========== PROJECT MODAL ========== -->
     <div id="projectModal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
         <div class="card w-full max-w-md modal-content">
-            <div class="p-6 border-b flex items-center justify-between">
+            <div class="p-6 flex items-center justify-between" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
                 <h2 class="text-2xl font-bold" id="projectModalTitle">New Project</h2>
-                <button onclick="closeProjectModal()" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+                <button onclick="closeProjectModal()" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-100 transition-all">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
@@ -757,11 +693,11 @@
     <!-- ========== DELETE MODAL ========== -->
     <div id="deleteModal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
         <div class="card w-full max-w-sm modal-content p-8 text-center">
-            <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
                 <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
             </div>
             <h3 class="text-xl font-bold mb-3">Delete Document?</h3>
-            <p class="opacity-70 mb-8">This action cannot be undone. The file will be permanently removed.</p>
+            <p class="opacity-70 mb-8">This cannot be undone.</p>
             <div class="flex gap-3">
                 <button onclick="closeDeleteModal()" class="flex-1 px-6 py-3 rounded-xl font-semibold glass hover:scale-105 transition-transform">Cancel</button>
                 <button onclick="confirmDelete()" class="flex-1 px-6 py-3 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-700 hover:scale-105 transition-all">Delete</button>
@@ -874,13 +810,14 @@
             try {
                 if (mode === 'register') {
                     await createUserWithEmailAndPassword(auth, email, password);
-                    showToast('Account created! Please sign in.', 'success');
+                    showToast('✅ Account created! Please sign in.', 'success');
                     setTimeout(() => toggleAuthMode('login'), 1500);
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
+                    showToast('✅ Welcome back!', 'success');
                 }
             } catch (error) {
-                showToast(error.message, 'error');
+                showToast('❌ ' + error.message, 'error');
             } finally {
                 hideLoading();
             }
@@ -895,8 +832,9 @@
                 document.getElementById('loginPage').classList.remove('hidden');
                 document.getElementById('dashboardPage').classList.add('hidden');
                 toggleAuthMode('login');
+                showToast('👋 Signed out successfully', 'info');
             } catch (error) {
-                showToast('Logout failed', 'error');
+                showToast('❌ Logout failed', 'error');
             }
         };
 
@@ -921,16 +859,19 @@
             document.getElementById('projectDetailPage').classList.add('hidden');
             document.getElementById('userEmail').textContent = window.currentUser.email;
 
-            // Load projects
+            // Projects
             if (window.unsubProjects) window.unsubProjects();
             const projectsQuery = query(collection(db, 'projects'), where('userId', '==', window.currentUser.uid));
             window.unsubProjects = onSnapshot(projectsQuery, (snapshot) => {
-                console.log(`📁 Loaded ${snapshot.docs.length} projects`);
+                console.log(`📁 ${snapshot.docs.length} projects loaded`);
                 window.projectsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 window.projectsCache.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 renderProjectsSection(window.projectsCache);
                 populateProjectSelect(window.projectsCache);
                 document.getElementById('projectsCount').textContent = window.projectsCache.length;
+            }, (error) => {
+                console.error('❌ Projects error:', error);
+                showToast('❌ Failed to load projects', 'error');
             });
 
             loadDocuments();
@@ -944,12 +885,15 @@
             if (window.unsubDocuments) window.unsubDocuments();
             const docsQuery = query(collection(db, 'documents'), where('userId', '==', window.currentUser.uid));
             window.unsubDocuments = onSnapshot(docsQuery, (snapshot) => {
-                console.log(`📄 Loaded ${snapshot.docs.length} documents`);
+                console.log(`📄 ${snapshot.docs.length} documents loaded`);
                 const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 renderDocuments(docs);
                 document.getElementById('docCount').textContent = docs.length;
                 updateStorageInfo();
+            }, (error) => {
+                console.error('❌ Documents error:', error);
+                showToast('❌ Failed to load documents', 'error');
             });
         }
 
@@ -958,7 +902,7 @@
             if (window.unsubProjectDocs) window.unsubProjectDocs();
             const q = query(collection(db, 'documents'), where('userId', '==', window.currentUser.uid), where('projectId', '==', projectId));
             window.unsubProjectDocs = onSnapshot(q, (snapshot) => {
-                console.log(`📄 Project docs: ${snapshot.docs.length}`);
+                console.log(`📄 ${snapshot.docs.length} project docs loaded`);
                 let docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 renderProjectDocuments(docs);
@@ -966,7 +910,7 @@
             });
         }
 
-        // PROJECT RENDERING
+        // RENDERING
         function renderProjectsSection(projects) {
             const container = document.getElementById('projectsContainer');
             const empty = document.getElementById('emptyProjectsState');
@@ -982,18 +926,17 @@
             container.classList.remove('hidden');
             empty.classList.add('hidden');
             container.innerHTML = roots.map(p => `
-                <div class="card p-6 cursor-pointer animate-fade-in" onclick="openProjectDetail('${p.id}')">
+                <div class="card p-6 cursor-pointer" style="animation: fadeIn 0.3s;" onclick="openProjectDetail('${p.id}')">
                     <div class="flex items-center justify-between mb-4">
                         <div class="w-14 h-14 rounded-2xl project-${p.color} flex items-center justify-center shadow-lg">
                             <i class="fas fa-folder text-2xl text-white"></i>
                         </div>
-                        ${p.children?.length ? `<span class="glass px-2 py-1 rounded-lg text-xs font-bold">${p.children.length} sub</span>` : ''}
+                        ${p.children?.length ? `<span class="glass px-2 py-1 rounded-lg text-xs font-bold">${p.children.length}</span>` : ''}
                     </div>
                     <h3 class="font-bold text-lg mb-2 truncate">${escapeHtml(p.name)}</h3>
                     <p class="text-sm opacity-70 mb-4 line-clamp-2">${escapeHtml(p.description || 'No description')}</p>
                     <div class="flex items-center justify-between text-xs opacity-60">
-                        <span><i class="fas fa-file mr-1"></i>0 files</span>
-                        <span>${formatDate(p.createdAt)}</span>
+                        <span><i class="fas fa-calendar mr-1"></i>${formatDate(p.createdAt)}</span>
                     </div>
                 </div>
             `).join('');
@@ -1027,9 +970,8 @@
             sel.innerHTML = opts;
         }
 
-        // PROJECT DETAIL
         window.openProjectDetail = async function(id) {
-            console.log('📂 Opening project:', id);
+            console.log('📂 Opening:', id);
             window.currentProjectId = id;
             const p = window.projectsCache.find(x => x.id === id);
             if (!p) return;
@@ -1072,7 +1014,7 @@
             
             section.classList.remove('hidden');
             container.innerHTML = subs.map(sp => `
-                <div class="card p-5 cursor-pointer hover:scale-105" onclick="openProjectDetail('${sp.id}')">
+                <div class="card p-5 cursor-pointer hover:scale-105" style="animation: fadeIn 0.3s;" onclick="openProjectDetail('${sp.id}')">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-xl project-${sp.color} flex items-center justify-center shadow-lg">
                             <i class="fas fa-folder text-xl text-white"></i>
@@ -1086,7 +1028,6 @@
             `).join('');
         }
 
-        // DOCUMENT RENDERING
         function renderDocuments(docs) {
             const container = document.getElementById('documentsContainer');
             const empty = document.getElementById('emptyState');
@@ -1125,12 +1066,12 @@
             const icon = getFileIcon(d.fileType);
             const proj = window.projectsCache.find(p => p.id == d.projectId);
             return `
-                <div class="card p-6 cursor-pointer group animate-fade-in" onclick="viewDocument('${d.id}')">
+                <div class="card p-6 cursor-pointer group" style="animation: fadeIn 0.3s;" onclick="viewDocument('${d.id}')">
                     <div class="flex items-center justify-between mb-4">
                         <div class="w-14 h-14 rounded-2xl glass flex items-center justify-center">
                             <i class="${icon} text-3xl"></i>
                         </div>
-                        <button onclick="event.stopPropagation(); showDeleteModal('${d.id}')" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900 text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                        <button onclick="event.stopPropagation(); showDeleteModal('${d.id}')" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-red-100 text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -1154,9 +1095,6 @@
             if (t.includes('excel') || t.includes('sheet') || t.includes('csv')) return 'fas fa-file-excel icon-excel';
             if (t.includes('powerpoint')) return 'fas fa-file-powerpoint icon-powerpoint';
             if (t.includes('text')) return 'fas fa-file-alt icon-text';
-            if (t.includes('video')) return 'fas fa-file-video icon-video';
-            if (t.includes('audio')) return 'fas fa-file-audio icon-audio';
-            if (t.includes('zip')) return 'fas fa-file-archive icon-archive';
             return 'fas fa-file icon-default';
         }
 
@@ -1174,12 +1112,12 @@
             const grid = document.getElementById('viewGrid');
             const list = document.getElementById('viewList');
             if (m === 'grid') {
-                grid.style.background = 'var(--primary)';
+                grid.style.background = 'var(--primary-rgb)';
                 grid.style.color = 'white';
                 list.style.background = 'transparent';
                 list.style.color = 'inherit';
             } else {
-                list.style.background = 'var(--primary)';
+                list.style.background = 'var(--primary-rgb)';
                 list.style.color = 'white';
                 grid.style.background = 'transparent';
                 grid.style.color = 'inherit';
@@ -1192,12 +1130,12 @@
             const grid = document.getElementById('projectViewGrid');
             const list = document.getElementById('projectViewList');
             if (m === 'grid') {
-                grid.style.background = 'var(--primary)';
+                grid.style.background = 'var(--primary-rgb)';
                 grid.style.color = 'white';
                 list.style.background = 'transparent';
                 list.style.color = 'inherit';
             } else {
-                list.style.background = 'var(--primary)';
+                list.style.background = 'var(--primary-rgb)';
                 list.style.color = 'white';
                 grid.style.background = 'transparent';
                 grid.style.color = 'inherit';
@@ -1260,11 +1198,11 @@
                 <div class="card p-4 flex items-center gap-3">
                     <i class="${getFileIcon(item.file.type)} text-2xl"></i>
                     <div class="flex-1 min-w-0">
-                        <input type="text" value="${escapeHtml(item.name)}" onchange="updateFileName(${idx}, this.value)" placeholder="File name" class="w-full mb-2 text-sm">
+                        <input type="text" value="${escapeHtml(item.name)}" onchange="updateFileName(${idx}, this.value)" placeholder="Name" class="w-full mb-2 text-sm">
                         <input type="text" value="${escapeHtml(item.description)}" onchange="updateFileDescription(${idx}, this.value)" placeholder="Description" class="w-full text-xs">
                     </div>
                     <span class="text-xs opacity-70">${formatSize(item.file.size)}</span>
-                    <button onclick="removeFile(${idx})" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900 text-red-500">
+                    <button onclick="removeFile(${idx})" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-100 text-red-500">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -1289,20 +1227,17 @@
 
         function renderTags() {
             document.getElementById('tagContainer').innerHTML = window.uploadTags.map((t,i)=>`
-                <span class="tag">
-                    ${escapeHtml(t)}
-                    <button onclick="removeTag(${i})"><i class="fas fa-times"></i></button>
-                </span>
+                <span class="tag">${escapeHtml(t)}<button onclick="removeTag(${i})"><i class="fas fa-times"></i></button></span>
             `).join('');
         }
         window.removeTag = (i) => { window.uploadTags.splice(i,1); renderTags(); };
 
-        // FIXED UPLOAD
+        // UPLOAD
         window.handleMultipleUpload = async function() {
             if (!window.selectedFiles.length) return;
             const btn = document.getElementById('uploadSubmitBtn');
             btn.disabled = true;
-            btn.innerHTML = '<div class="spinner !w-5 !h-5 !border-2"></div> Uploading...';
+            btn.innerHTML = '<div class="spinner !w-5 !h-5 !border-2 !border-white !border-t-transparent"></div> Uploading...';
             const pid = document.getElementById('uploadProject').value || null;
             showLoading();
 
@@ -1326,13 +1261,13 @@
                         tags: window.uploadTags,
                         createdAt: new Date().toISOString()
                     });
-                    console.log(`✅ Uploaded: ${it.name}`);
+                    console.log(`✅ ${i+1}/${window.selectedFiles.length} uploaded`);
                 }
                 closeUploadModal();
-                showToast(`✅ ${window.selectedFiles.length} file(s) uploaded successfully`);
+                showToast(`✅ ${window.selectedFiles.length} file(s) uploaded!`, 'success');
             } catch (error) {
                 console.error('❌ Upload error:', error);
-                showToast('Upload failed: ' + error.message, 'error');
+                showToast('❌ Upload failed: ' + error.message, 'error');
             } finally {
                 hideLoading();
                 btn.disabled = false;
@@ -1361,10 +1296,10 @@
             document.querySelectorAll('[data-color]').forEach(b => {
                 if (b.dataset.color === c) {
                     b.classList.add('ring-4', 'ring-offset-2');
-                    b.classList.remove('hover:scale-110');
+                    b.style.transform = 'scale(1.1)';
                 } else {
                     b.classList.remove('ring-4', 'ring-offset-2');
-                    b.classList.add('hover:scale-110');
+                    b.style.transform = 'scale(1)';
                 }
             });
         };
@@ -1379,29 +1314,29 @@
                 parentId: document.getElementById('parentProjectId').value || null,
                 createdAt: new Date().toISOString()
             };
-            if (!proj.name) return showToast('Project name required', 'error');
+            if (!proj.name) return showToast('❌ Name required', 'error');
             
             showLoading();
             try {
                 await addDoc(collection(db, 'projects'), proj);
                 closeProjectModal();
-                showToast('📁 Project created successfully');
+                showToast('✅ Project created!', 'success');
             } catch (error) {
-                showToast('Error: ' + error.message, 'error');
+                showToast('❌ ' + error.message, 'error');
             } finally {
                 hideLoading();
             }
         };
 
-        // VIEW DOCUMENT
+        // VIEW
         window.viewDocument = async function(id) {
-            console.log('👁️ Opening document:', id);
+            console.log('👁️ Viewing:', id);
             showLoading();
             try {
                 const docSnap = await getDoc(doc(db, 'documents', id));
-                if (!docSnap.exists()) return showToast('Document not found', 'error');
+                if (!docSnap.exists()) return showToast('❌ Not found', 'error');
                 const docData = { id: docSnap.id, ...docSnap.data() };
-                if (docData.userId !== window.currentUser.uid) return showToast('Access denied', 'error');
+                if (docData.userId !== window.currentUser.uid) return showToast('❌ Access denied', 'error');
                 
                 const response = await fetch(docData.fileURL);
                 const blob = await response.blob();
@@ -1411,7 +1346,7 @@
                 openViewerWithDoc(docData);
             } catch (error) {
                 console.error('❌ View error:', error);
-                showToast('Failed to load: ' + error.message, 'error');
+                showToast('❌ Failed to load', 'error');
             } finally {
                 hideLoading();
             }
@@ -1428,7 +1363,7 @@
 
         async function renderViewerContent(doc) {
             const container = document.getElementById('viewerContent');
-            container.innerHTML = '<div class="text-white text-center"><div class="spinner mx-auto mb-4"></div><p>Loading preview...</p></div>';
+            container.innerHTML = '<div class="text-white text-center"><div class="spinner mx-auto mb-4"></div><p>Loading...</p></div>';
             
             try {
                 const fileType = doc.fileType || '';
@@ -1452,7 +1387,7 @@
                 }
             } catch (err) {
                 console.error('❌ Render error:', err);
-                container.innerHTML = `<div class="text-white text-center"><p>Preview failed: ${err.message}</p></div>`;
+                container.innerHTML = `<div class="text-white text-center"><p>❌ Preview failed</p></div>`;
             }
         }
 
@@ -1478,7 +1413,7 @@
 
         function renderImage(doc) {
             document.getElementById('viewerContent').innerHTML = `
-                <img src="${doc.objectURL}" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl" style="transform:scale(${window.currentZoom})">
+                <img src="${doc.objectURL}" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl">
             `;
         }
 
@@ -1489,16 +1424,6 @@
             else document.getElementById('dashboardPage').classList.remove('hidden');
             window.currentDoc = null;
         };
-
-        // ZOOM
-        window.adjustZoom = function(delta) {
-            window.currentZoom = Math.max(0.5, Math.min(3, window.currentZoom + delta));
-            document.getElementById('zoomLevel').textContent = Math.round(window.currentZoom * 100) + '%';
-            document.getElementById('floatingZoomLevel').textContent = Math.round(window.currentZoom * 100) + '%';
-            const img = document.querySelector('#viewerContent img');
-            if (img) img.style.transform = `scale(${window.currentZoom})`;
-        };
-        window.resetZoom = () => { window.currentZoom = 1; adjustZoom(0); };
 
         // DELETE
         window.showDeleteModal = (id) => { window.deleteTargetId = id; document.getElementById('deleteModal').classList.remove('hidden'); };
@@ -1512,15 +1437,14 @@
                 if (data.storagePath) await deleteObject(ref(storage, data.storagePath));
                 await deleteDoc(doc(db, 'documents', window.deleteTargetId));
                 closeDeleteModal();
-                showToast('🗑️ Document deleted');
+                showToast('✅ Deleted', 'success');
             } catch (error) {
-                showToast('Delete failed: ' + error.message, 'error');
+                showToast('❌ Delete failed', 'error');
             } finally {
                 hideLoading();
             }
         };
 
-        // DOWNLOAD
         window.downloadCurrentFile = function() {
             if (!window.currentDoc) return;
             const a = document.createElement('a');
@@ -1531,50 +1455,56 @@
 
         // THEME
         window.toggleTheme = function() {
-            const isDark = document.body.classList.toggle('dark');
-            document.body.classList.toggle('light');
-            document.getElementById('themeIcon').className = isDark ? 'fas fa-sun text-lg' : 'fas fa-moon text-lg';
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            const isDark = document.body.classList.contains('dark');
+            if (isDark) {
+                document.body.classList.remove('dark');
+                document.body.classList.add('light');
+                document.getElementById('themeIcon').className = 'fas fa-moon text-lg';
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.body.classList.remove('light');
+                document.body.classList.add('dark');
+                document.getElementById('themeIcon').className = 'fas fa-sun text-lg';
+                localStorage.setItem('theme', 'dark');
+            }
+        };
+
+        window.toggleColorPicker = function() {
+            document.getElementById('colorPicker').classList.toggle('hidden');
         };
 
         window.setThemeColor = function(color) {
-            console.log('🎨 Setting theme color:', color);
+            console.log('🎨 Theme:', color);
             document.documentElement.setAttribute('data-theme', color);
             localStorage.setItem('themeColor', color);
             
-            // Update CSS variables
-            const colors = {
-                blue: { primary: '#3b82f6', dark: '#2563eb', light: '#60a5fa' },
-                purple: { primary: '#a855f7', dark: '#9333ea', light: '#c084fc' },
-                green: { primary: '#10b981', dark: '#059669', light: '#34d399' },
-                orange: { primary: '#f97316', dark: '#ea580c', light: '#fb923c' },
-                pink: { primary: '#ec4899', dark: '#db2777', light: '#f472b6' },
-                red: { primary: '#ef4444', dark: '#dc2626', light: '#f87171' }
-            };
-            
-            const theme = colors[color];
-            if (theme) {
-                document.documentElement.style.setProperty('--primary', theme.primary);
-                document.documentElement.style.setProperty('--primary-dark', theme.dark);
-                document.documentElement.style.setProperty('--primary-light', theme.light);
+            // Update header icon
+            const headerIcon = document.getElementById('headerIcon');
+            if (headerIcon) {
+                headerIcon.style.background = `var(--primary-rgb)`;
             }
             
-            // Force re-render by toggling a class
-            document.body.classList.add('theme-changing');
-            setTimeout(() => document.body.classList.remove('theme-changing'), 10);
+            // Update palette icon
+            const paletteIcon = document.getElementById('paletteIcon');
+            if (paletteIcon) {
+                paletteIcon.style.color = `var(--primary-rgb)`;
+            }
+            
+            showToast(`✨ Theme changed to ${color}`, 'info');
+            document.getElementById('colorPicker').classList.add('hidden');
         };
 
-        // Load saved theme
+        // Init
         (function initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.body.classList.add(savedTheme);
             document.getElementById('themeIcon').className = savedTheme === 'dark' ? 'fas fa-sun text-lg' : 'fas fa-moon text-lg';
             
             const savedColor = localStorage.getItem('themeColor') || 'blue';
-            setThemeColor(savedColor);
+            document.documentElement.setAttribute('data-theme', savedColor);
         })();
 
-        // UTILITIES
+        // UTILS
         function formatSize(b) {
             if (!b) return '0 B';
             const k = 1024, s = ['B','KB','MB','GB'];
@@ -1624,6 +1554,7 @@
         }
 
         console.log('🔥 Firebase initialized');
+        console.log('✅ All systems ready');
     </script>
 </body>
 </html>
